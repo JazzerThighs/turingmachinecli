@@ -25,6 +25,6 @@ fn generate_number_pool(length: usize, min: u8, max: u8) -> Vec<u32> {
 }
 
 fn main() {
-    println!("Welcome to the Turing Machine CLI!\n\nThis program is a personal project based off of the board game \"Turing Machine\" designed by Fabien Gridel & Yoann Levet");
+    println!("~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ \n\nWelcome to the Turing Machine CLI!\n\nThis program is a personal project based off of the board game \"Turing Machine\" designed by Fabien Gridel & Yoann Levet");
     println!("{:?}", generate_number_pool(3, 1, 5));
 }
