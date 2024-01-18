@@ -60,17 +60,22 @@ pub fn generate_number_pool(length: usize, min: u8, max: u8) -> Vec<u32> {
 }
 
 use rand::Rng;
-pub fn rng_target_code(codes: Vec<u32>) -> u32 {
-    let mut rng = rand::thread_rng();
-    let target_code: u32 = codes[rng.gen_range(0..codes.len())];
-    return target_code;
+
+fn is_valid_turing_code(code: u32) -> bool {
+    (111..=555).contains(&code) && code.to_string().chars().all(|c| c >= '1' && c <= '5')
 }
 
+pub fn rng_target_code() -> u32 {
+    let mut rng = rand::thread_rng();
 
-    name: String,
-    game_id: String,
-    guesses: Vec<u32>, // Assuming each guess is a Vec<u8> with a length of 3
-    test_results: Vec<Vec<Checkbox>>, // Outer Vec for rounds, inner Vec for each test in a round
-    code_digit_values: Vec<Vec<DigitValueState>>, // One Vec for each digit, inner Vec for each possible value
-    notes: Vec<TestNotes>, // One TestNotes struct for each test
+    loop {
+        let digit1 = rng.gen_range(1..=5);
+        let digit2 = rng.gen_range(1..=5);
+        let digit3 = rng.gen_range(1..=5);
+        let code = digit1 * 100 + digit2 * 10 + digit3;
+
+        if is_valid_turing_code(code) {
+            return code;
+        }
+    }
 }
