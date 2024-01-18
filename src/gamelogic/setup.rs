@@ -48,10 +48,12 @@ pub fn generate_number_pool(length: usize, min: u8, max: u8) -> Vec<u32> {
             if strs[i] < max {
                 strs[i] += 1;
                 break;
-            } else if i == 0 {
-                return result;
             } else {
-                strs[i] = min;
+                if i == 0 {
+                    return result;
+                } else {
+                    strs[i] = min;
+                }
             }
         }
     }
@@ -62,4 +64,13 @@ pub fn rng_target_code(codes: Vec<u32>) -> u32 {
     let mut rng = rand::thread_rng();
     let target_code: u32 = codes[rng.gen_range(0..codes.len())];
     return target_code;
+}
+
+
+    name: String,
+    game_id: String,
+    guesses: Vec<u32>, // Assuming each guess is a Vec<u8> with a length of 3
+    test_results: Vec<Vec<Checkbox>>, // Outer Vec for rounds, inner Vec for each test in a round
+    code_digit_values: Vec<Vec<DigitValueState>>, // One Vec for each digit, inner Vec for each possible value
+    notes: Vec<TestNotes>, // One TestNotes struct for each test
 }
