@@ -31,9 +31,12 @@ pub fn select_code_structure() -> (u32, u32, char, char) {
                 continue;
             }
         };
+        if max_digit <= min_digit {
+            println!("Largest digit character must be greater than smallest digit character...");
+            continue;
+        }
 
         println!("Please input the number of digits in the valid codes. (In the original game, this is 3, resulting in codes ranging from 111 to 555, inclusive.)");
-
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
@@ -47,7 +50,7 @@ pub fn select_code_structure() -> (u32, u32, char, char) {
         match code_length {
             3 => {},
             _ => {
-                println!("Invalid code length entered...");
+                println!("Chosen length not implemented...");
                 continue;
             }
         }
