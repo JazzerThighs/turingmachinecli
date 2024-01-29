@@ -1,16 +1,11 @@
-mod gamelogic;
-use crate::gamelogic::*;
+mod game_logic;
+use crate::{game_logic::*, setup::*};
 
 fn main() {
-    println!("~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ \n\nWelcome to the Turing Machine CLI!\n\nThis program is a personal project based off of the board game called \"Turing Machine\" designed by Fabien Gridel & Yoann Levet");
+    println!("~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ \n\nWelcome to the Turing Machine CLI!\n\nThis program is a personal project based off of the board game called \"Turing Machine\" designed by Fabien Gridel & Yoann Levet.");
     
-    let code_array: Vec<u32> = setup::generate_number_pool(3, 1, 5);
-    let mut results_matrix: Vec<setup::TuringCodeResults> = vec![];
-    for code in code_array.iter() {
-        results_matrix.push(setup::generate_result_matrix(code.clone()));
-    }
-
-    let matrix = results_matrix;
-
-    let round_counter: u8 = 1;
+    let (min_code, max_code, min_digit, max_digit) = setup::select_code_structure();
+    let matrix: Vec<setup::TuringCodeResults> = generate_results_matrix(min_code, max_code, min_digit, max_digit);
+    let target_code: u32 = generate_random_puzzle_code(min_code, max_code, min_digit, max_digit);
+    let target_index: u32 = target_code_index(matrix, target_code);
 }

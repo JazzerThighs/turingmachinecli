@@ -1,45 +1,6 @@
-pub fn is_valid_turing_code(code: u32) -> bool {
-    (111..=555).contains(&code) && code.to_string().chars().all(|c| c >= '1' && c <= '5')
-}
+use crate::game_logic::setup::TuringCodeResults;
 
-pub struct TuringCodeResults {
-    code: u32,
-    checks: Vec<(u8, bool)>,
-}
-
-pub fn generate_number_pool(length: usize, min: u8, max: u8) -> Vec<u32> {
-    print!("Generating Pool of Turing Codes...  ");
-
-    let mut result = Vec::new();
-    let mut strs = vec![min; length];
-
-    loop {
-        let number: u32 = strs
-            .iter()
-            .map(|&n| n.to_string())
-            .collect::<String>()
-            .parse()
-            .unwrap_or(0);
-
-        result.push(number);
-
-        for i in (0..length).rev() {
-            if strs[i] < max {
-                strs[i] += 1;
-                break;
-            } else {
-                if i == 0 {
-                    println!("Done!");
-                    return result;
-                } else {
-                    strs[i] = min;
-                }
-            }
-        }
-    }
-}
-
-pub fn generate_result_matrix(turing_code: u32) -> TuringCodeResults {
+pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeResults {
     let mut num = turing_code.clone();
     let purple = &num % 10;
     num /= 10;
@@ -981,7 +942,7 @@ pub fn generate_result_matrix(turing_code: u32) -> TuringCodeResults {
         (48, test48_6),
         (48, test48_7),
         (48, test48_8),
-        (48, test48_9)
+        (48, test48_9),
     ]);
 
     let code_struct: TuringCodeResults = TuringCodeResults {
