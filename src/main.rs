@@ -7,6 +7,6 @@ fn main() {
     let (min_code, max_code, min_digit, max_digit) = setup::select_code_structure();
     println!("Minimum Code: {}, Maximum Code: {}, Smallest Digit: {}, Largest Digit: {}", min_code, max_code, min_digit, max_digit);
     let matrix: Vec<setup::TuringCodeResults> = generate_results_matrix(min_code, max_code, min_digit, max_digit);
-    let target_code: u32 = generate_random_puzzle_code(min_code, max_code, min_digit, max_digit);
+    let target_code: u32 = generate_random_puzzle_code(min_code.to_string().len() as u32, min_digit, max_digit);
     let target_index: u32 = target_code_index(matrix, target_code);
 }

@@ -85,15 +85,14 @@ pub fn is_valid_turing_code(
 }
 
 pub fn generate_random_puzzle_code(
-    min_code: u32,
-    max_code: u32,
+    code_length: u32,
     min_digit: char,
     max_digit: char,
 ) -> u32 {
     use rand::{rngs::ThreadRng, Rng};
     let mut target_code: u32 = 0;
     let mut rng: ThreadRng = rand::thread_rng();
-    for _ in 1..=min_code.to_string().len() {
+    for _ in 1..=code_length {
         target_code *= 10;
         target_code += rng.gen_range(min_digit..=max_digit) as u32;
     }
