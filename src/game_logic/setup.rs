@@ -33,7 +33,10 @@ pub fn select_code_structure() -> (u32, u32, char, char) {
             }
         };
         if max_digit <= min_digit {
-            println!("Largest digit character must be greater than smallest digit character: {} <= {}", max_digit, min_digit);
+            println!(
+                "Largest digit character must be greater than smallest digit character: {} <= {}",
+                max_digit, min_digit
+            );
             continue;
         }
 
@@ -50,7 +53,7 @@ pub fn select_code_structure() -> (u32, u32, char, char) {
             }
         };
         match code_length {
-            3 => {},
+            3 => {}
             _ => {
                 println!("Chosen length not implemented \"{}\"", code_length);
                 continue;
@@ -84,11 +87,7 @@ pub fn is_valid_turing_code(
             .all(|c| c >= min_digit && c <= max_digit)
 }
 
-pub fn generate_random_puzzle_code(
-    code_length: u32,
-    min_digit: char,
-    max_digit: char,
-) -> u32 {
+pub fn generate_random_puzzle_code(code_length: u32, min_digit: char, max_digit: char) -> u32 {
     use rand::{rngs::ThreadRng, Rng};
     let mut target_code: u32 = 0;
     let mut rng: ThreadRng = rand::thread_rng();
