@@ -15,11 +15,12 @@ pub fn select_code_structure() -> (u32, u32, char, char) {
         min_digit = match input.trim() {
             "1" | "2" | "3" | "4" => input.trim().chars().next().expect("empty input"),
             _ => {
-                println!("Invalid smallest digit character...");
+                println!("Invalid smallest digit character \"{}\"", input.trim());
                 continue;
             }
         };
 
+        let mut input = String::new();
         println!("Please input the largest digit character. (In the original game, this is '5'.)");
         io::stdin()
             .read_line(&mut input)
@@ -27,15 +28,16 @@ pub fn select_code_structure() -> (u32, u32, char, char) {
         max_digit = match input.trim() {
             "2" | "3" | "4" | "5" => input.trim().chars().next().expect("empty input"),
             _ => {
-                println!("Invalid largest digit character...");
+                println!("Invalid largest digit character \"{}\"", input.trim());
                 continue;
             }
         };
         if max_digit <= min_digit {
-            println!("Largest digit character must be greater than smallest digit character...");
+            println!("Largest digit character must be greater than smallest digit character: {} <= {}", max_digit, min_digit);
             continue;
         }
 
+        let mut input = String::new();
         println!("Please input the number of digits in the valid codes. (In the original game, this is 3, resulting in codes ranging from 111 to 555, inclusive.)");
         io::stdin()
             .read_line(&mut input)
@@ -43,14 +45,14 @@ pub fn select_code_structure() -> (u32, u32, char, char) {
         let code_length: u8 = match input.trim().parse() {
             Ok(num) => num,
             Err(_) => {
-                println!("Invalid code length entered...");
+                println!("Invalid code length entered \"{}\"", input.trim());
                 continue;
             }
         };
         match code_length {
             3 => {},
             _ => {
-                println!("Chosen length not implemented...");
+                println!("Chosen length not implemented \"{}\"", code_length);
                 continue;
             }
         }
