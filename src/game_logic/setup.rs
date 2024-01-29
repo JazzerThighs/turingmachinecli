@@ -79,7 +79,9 @@ pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
             .read_line(&mut input)
             .expect("Failed to read line");
         mode = match input.trim() {
-            "c" | "e" | "n" => input.trim().to_owned(),
+            "c" => String::from("Classic Mode"),
+            "e" => String::from("Extreme Mode"),
+            "n" => String::from("Nightmare Mode"),
             _ => {
                 println!("Invalid mode selection \"{}\"", input.trim());
                 continue;
@@ -196,13 +198,20 @@ pub fn target_code_index(matrix: Vec<TuringCodeResults>, target_code: u32) -> u3
 //      PUZZLE GENERATION:
 //          -Generate a Vec<Vec<u32>> that has the same length as the results matrix. Each index contains a vector of test indexes that are coupled to that index's test.
 //          -Select a random test index which is true in the target_index's checks vector, and add it to the list of tests for the puzzle.
-//              -Ensure that the test index has been chosen based on the range specified by the selected difficulty:
-//                  Easy | Standard => Criteria Cards 1..=25,
-//                  Hard            => Criteria Cards 26..=48 for at least the first half of the tests, and 1..=48 for the rest of the tests.
+//              If (the mode is "Classic Mode") {
+//                  Ensure that the test index has been chosen based on the range specified by the selected difficulty:
+//                      Easy (4 tests) | Standard (5 tests) => Criteria Cards 1..=25,
+//                      Hard (6 tests)                      => Criteria Cards 26..=48 for at least the first half of the tests, and 1..=48 for the rest of the tests.
+//              } Else {
+//                  Since the mode is not "Classic Mode," all of the Criteria Cards are on the table:
+//                      Criteria Cards 26..=48 for at least the first half of the tests, and 1..=48 for the rest of the tests.
+//              }
+//              
 //              -Ensure that the test which has been selected hasn't had it's criteria card number added to the list of taken criteria cards.
 //              -Ensure that the test which has been selected is not included in any one of the previous tests' vector of coupled tests.
+//              
 //              If (the number of tests < the number of tests specified for the puzzle) {
 //                  for however many tests have been added to the puzzle's test list, make sure that the collection of tests chosen are not uniquely true for that one code.
 //              } Else If (the number of tests == the number of tests specified for the puzzle) {
-//                  ensure that the collection of tests is uniquely truthy for that one target_code, otherwise throw out the last code.
+//                  ensure that the collection of tests is uniquely truthy for that one target_code, otherwise replace the last test.
 //              }
