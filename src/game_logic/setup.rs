@@ -5,7 +5,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
     loop {
         let mut input = String::new();
 
-        println!("Please input the smallest digit character (In the original game, this is '1').");
+        println!("↓ Please input the smallest digit character (In the original game, this is '1').");
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
@@ -18,7 +18,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
         };
 
         let mut input = String::new();
-        println!("Please input the largest digit character (In the original game, this is '5').");
+        println!("↓ Please input the largest digit character (In the original game, this is '5').");
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
@@ -42,7 +42,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
     let mut code_length: u8;
     loop {
         let mut input = String::new();
-        println!("Please input the number of digits in the valid codes (In the original game, this is 3, resulting in codes ranging from 111 to 555, inclusive).");
+        println!("↓ Please input the number of digits in the valid codes (In the original game, this is 3, resulting in codes ranging from 111 to 555, inclusive).");
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
@@ -74,7 +74,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
     let mode: String;
     loop {
         let mut input = String::new();
-        println!("Please input the gamemode setting; Your choices are \"Classic Mode\"(c), \"Extreme Mode\"(e), and \"Nightmare Mode\"(n).");
+        println!("↓ Please input the gamemode setting; Your choices are \"Classic Mode\"(c), \"Extreme Mode\"(e), and \"Nightmare Mode\"(n).");
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
@@ -93,7 +93,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
     let mut test_amount: u8;
     loop {
         let mut input = String::new();
-        println!("Please input the number of tests that the puzzle shall contain (In the original game, there may be 4, 5, or 6 tests).");
+        println!("↓ Please input the number of tests that the puzzle shall contain (In the original game, there may be 4, 5, or 6 tests).");
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
