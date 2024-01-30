@@ -1,11 +1,23 @@
-use std::io;
-pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
+use crate::game_logic::game_variants::*;
+use rand::{rngs::ThreadRng, Rng};
+use std::{collections::HashMap, io};
+
+#[derive(Debug)]
+pub enum Gamemode {
+    ClassicMode,
+    ExtremeMode,
+    NightmareMode,
+}
+
+pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, u8) {
     let mut min_digit: char;
     let mut max_digit: char;
     loop {
         let mut input = String::new();
 
-        println!("↓ Please input the smallest digit character (In the original game, this is '1').");
+        println!(
+            "↓ Please input the smallest digit character (In the original game, this is '1')."
+        );
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
@@ -38,7 +50,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
         }
         break;
     }
-    
+
     let mut code_length: u8;
     loop {
         let mut input = String::new();
@@ -61,7 +73,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
             }
         }
     }
-    
+
     let mut min_code: u32 = 0;
     let mut max_code: u32 = 0;
     for _ in 1..=code_length {
@@ -70,8 +82,8 @@ pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
         max_code *= 10;
         max_code += max_digit.to_digit(10).unwrap();
     }
-    
-    let mode: String;
+
+    let mode: Gamemode;
     loop {
         let mut input = String::new();
         println!("↓ Please input the gamemode setting; Your choices are \"Classic Mode\"(c), \"Extreme Mode\"(e), and \"Nightmare Mode\"(n).");
@@ -79,9 +91,9 @@ pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
             .read_line(&mut input)
             .expect("Failed to read line");
         mode = match input.trim() {
-            "c" => String::from("Classic Mode"),
-            "e" => String::from("Extreme Mode"),
-            "n" => String::from("Nightmare Mode"),
+            "c" => Gamemode::ClassicMode,
+            "e" => Gamemode::ExtremeMode,
+            "n" => Gamemode::NightmareMode,
             _ => {
                 println!("Invalid mode selection \"{}\"", input.trim());
                 continue;
@@ -89,7 +101,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, String, u8) {
         };
         break;
     }
-    
+
     let mut test_amount: u8;
     loop {
         let mut input = String::new();
@@ -128,17 +140,6 @@ pub fn is_valid_turing_code(
             .to_string()
             .chars()
             .all(|c| c >= min_digit && c <= max_digit)
-}
-
-pub fn generate_random_puzzle_code(code_length: u32, min_digit: char, max_digit: char) -> u32 {
-    use rand::{rngs::ThreadRng, Rng};
-    let mut target_code: u32 = 0;
-    let mut rng: ThreadRng = rand::thread_rng();
-    for _ in 1..=code_length {
-        target_code *= 10;
-        target_code += rng.gen_range(min_digit..=max_digit) as u32;
-    }
-    return target_code;
 }
 
 pub struct TuringCodeResults {
@@ -185,54 +186,112 @@ pub fn generate_results_matrix(
     return results_matrix;
 }
 
-pub fn target_code_index(matrix: Vec<TuringCodeResults>, target_code: u32) -> u32 {
-    for index in 0..matrix.len() {
-        if matrix[index].code == target_code {
-            return index as u32;
-        }
+pub fn generate_random_puzzle_code(code_length: u32, min_digit: char, max_digit: char) -> u32 {
+    let mut target_code: u32 = 0;
+    let mut rng: ThreadRng = rand::thread_rng();
+    for _ in 1..=code_length {
+        target_code *= 10;
+        target_code += rng.gen_range(min_digit..=max_digit) as u32;
     }
-    return 0;
+    return target_code;
 }
 
-pub fn generate_coupled_criteria(results_matrix: Vec<TuringCodeResults>) -> Vec<Vec<usize>> {
-    let mut coupled_checks: Vec<Vec<usize>> = vec![Vec::new(); results_matrix[0].checks.len()];
+fn generate_unique_test_list(matrix: &[TuringCodeResults]) -> Vec<usize> {
+    let mut counts: HashMap<usize, u32> = HashMap::new();
 
-    let is_coupled = |x: usize, y: usize| -> bool {
-        results_matrix.iter().all(|turing_result| turing_result.checks[x].1 == turing_result.checks[y].1)
-    };
-
-    for x in 0..results_matrix[0].checks.len() {
-        for y in 0..results_matrix[0].checks.len() {
-            if x != y && is_coupled(x, y) {
-                // Push the index if they are coupled
-                coupled_checks[x].push(y);
+    for turing_code_result in matrix {
+        for (index, (_, value)) in turing_code_result.checks.iter().enumerate() {
+            if *value {
+                *counts.entry(index).or_insert(0) += 1;
             }
         }
     }
 
-    return coupled_checks;
+    return counts
+        .into_iter()
+        .filter_map(|(index, count)| if count == 1 { Some(index) } else { None })
+        .collect();
 }
 
+fn generate_coupled_criteria(matrix: &Vec<TuringCodeResults>) -> Vec<Vec<usize>> {
+    let mut vec_test_couplings: Vec<Vec<usize>> = vec![Vec::new(); matrix[0].checks.len()];
 
+    let is_coupled = |x: usize, y: usize| -> bool {
+        matrix
+            .iter()
+            .all(|turing_result| turing_result.checks[x].1 == turing_result.checks[y].1)
+    };
+
+    for x in 0..matrix[0].checks.len() {
+        for y in 0..matrix[0].checks.len() {
+            if x != y && is_coupled(x, y) {
+                vec_test_couplings[x].push(y);
+            }
+        }
+    }
+
+    return vec_test_couplings;
+}
+
+pub struct Puzzle {
+    pub target_code: u32,
+    pub tests: Vec<Vec<usize>>,
+}
+
+pub fn generate_puzzle_wrapper(
+    min_code: u32,
+    max_code: u32,
+    matrix: &Vec<TuringCodeResults>,
+    test_amount: u8,
+    mode: Gamemode,
+    target_code: u32,
+) -> Puzzle {
+    let test_pool: Vec<Vec<usize>> = vec![Vec::new(); test_amount as usize];
+    let mut target_index: usize = 0;
+    for index in 0..matrix.len() {
+        if matrix[index].code == target_code {
+            target_index = index;
+            break;
+        }
+    }
+    let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(&matrix);
+    let vec_unique_tests: Vec<usize> = generate_unique_test_list(&matrix);
+    let length: usize = min_code.to_string().len();
+
+    let puzzle: Puzzle = match (min_code, max_code, length) {
+        (111, 555, 3) => len3_min1_max5::create_puzzle::puzzle_maker(
+            matrix,
+            test_amount,
+            mode,
+            target_code,
+            target_index,
+            vec_test_couplings,
+            vec_unique_tests,
+        ),
+        _ => todo!(),
+    };
+
+    return puzzle;
+}
 
 //  TODO: Generate the Puzzle by taking the generated random target_code, then selecting at least 4 tests which follow the schematic of the game, and setting up the user to play.
 //      PUZZLE GENERATION:
 //          -DONE-Generate a Vec<Vec<u32>> that has the same length as the results matrix. Each index contains a vector of test indexes that are coupled to that index's test.
-//          
+//
 //          -Select a random test index which is true in the target_index's checks vector, and add it to the list of tests for the puzzle.
 //              If (the mode is "Classic Mode") {
 //                  Ensure that the test index has been chosen based on the range specified by the selected difficulty:
-//                      Easy (4 tests) | Standard (5 tests) => Criteria Cards 1..=25,
-//                      Hard (6 tests)                      => Criteria Cards 26..=48 for at least the first half of the tests, and 1..=48 for the rest of the tests.
+//                      Easy (4 tests) | Standard (5 tests) => .checks index 0..=71,
+//                      Hard (6 tests)                      => .checks index 72..=182 for the first half of the tests, and 0..=182 for the rest of the tests.
 //              } Else {
 //                  Since the mode is not "Classic Mode," all of the Criteria Cards are on the table:
-//                      Criteria Cards 26..=48 for at least the first half of the tests, and 1..=48 for the rest of the tests.
+//                      .checks index 72..=182 for at least the first half of the tests, and 0..=182 for the rest of the tests.
 //              }
-//              
+//
 //          -Ensure that the test which has been selected hasn't had it's criteria card number added to the list of taken criteria cards.
 //
-//          -Ensure that the test which has been selected is not included in any one of the previous tests' vector of coupled tests.
-//              
+//          -Ensure that the test which has been selected is not included in any one of the previous tests' vector of coupled tests (!vec_test_couplings[x].includes(matrix[target_index].checks[x].0)).
+//
 //          If (the number of tests < the number of tests specified for the puzzle) {
 //              for however many tests have been added to the puzzle's test list, make sure that the collection of tests chosen are not uniquely true for that one code.
 //          } Else If (the number of tests == the number of tests specified for the puzzle) {
