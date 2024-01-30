@@ -246,7 +246,6 @@ pub fn generate_puzzle_wrapper(
     mode: Gamemode,
     target_code: u32,
 ) -> Puzzle {
-    let test_pool: Vec<Vec<usize>> = vec![Vec::new(); test_amount as usize];
     let mut target_index: usize = 0;
     for index in 0..matrix.len() {
         if matrix[index].code == target_code {
@@ -260,13 +259,13 @@ pub fn generate_puzzle_wrapper(
 
     let puzzle: Puzzle = match (min_code, max_code, length) {
         (111, 555, 3) => len3_min1_max5::create_puzzle::puzzle_maker(
-            matrix,
+            &matrix,
             test_amount,
             mode,
             target_code,
             target_index,
-            vec_test_couplings,
-            vec_unique_tests,
+            &vec_test_couplings,
+            &vec_unique_tests,
         ),
         _ => todo!(),
     };
