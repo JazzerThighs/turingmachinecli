@@ -1,7 +1,10 @@
 The "Turing Machine" board game, designed by Fabien Gridel & Yoann Levet, is a numerical code deduction game in which a fixed set of criteria is used to encode the solution. These solutions, paired with the designated criteria cards, form the structure of a single Puzzle.
 
 For every puzzle:
-There are 4-6 Criteria Cards selected from the following [Google Docs list](https://docs.google.com/spreadsheets/d/1dfX8t721TQ8SkYII1OoLZE88pM3_lsMlJyGCVeVRp3c/edit?usp=sharing).
+There are 4-6 Criteria Cards selected from the following Google Docs list: (https://docs.google.com/spreadsheets/d/1dfX8t721TQ8SkYII1OoLZE88pM3_lsMlJyGCVeVRp3c/edit?usp=sharing)
+The rulebook for the Original Game can be found here: (https://cdn.1j1ju.com/medias/a6/12/e4-turing-machine-rulebook.pdf)
+An additional Page that is not included in the Rulebook can be found here: (https://turingmachine.info/files/rules/TuringMachine_The_X_Paradox_EN.pdf)
+
 There are 3 different variations on the game: Classic Mode, Extreme Mode, and Nightmare Mode. Classic Mode is the standard way to play the game, and the other two are simply more difficult variations on Classic Mode.
 
 The goal of the game in all modes is to query the Machine's various sections' Criteria Cards using sets of Punch-Cards to verify criteria against a particular section's Verifier Card; Essentially, these Verifier Cards are just pre-calculated constructs that reveal analog representations of the result specified by the Puzzle's Criteria Tests. It is most useful to first examine the Criteria Cards and how they function:
