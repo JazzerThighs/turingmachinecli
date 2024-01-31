@@ -152,9 +152,9 @@ pub fn is_valid_turing_code(
 
 pub struct TuringCodeResults {
     // Structure to pair every individual Turing Code with an array of booleans as it is put through every Test on every Criteria Card.
-    //This is replacing the pre-calculated Punch Cards used for querying the Turing Machine's Verifier Cards.
+    // This is replacing the pre-calculated Punch Cards used for querying the Turing Machine's Verifier Cards.
     pub code: u32,
-    pub checks: Vec<(u8, bool)>,
+    pub checks: Vec<(u8, bool)>, // Vec<(criteria_card_num, pass_fail)>
 }
 
 pub fn generate_number_pool(
@@ -299,15 +299,18 @@ pub fn generate_puzzle_wrapper(
                     match difficulty {
                         Difficulty::Easy => 0..=71,
                         Difficulty::Standard => 0..=71,
-                        Difficulty::Hard => 72..=matrix.len(),
+                        Difficulty::Hard => 72..=matrix[0].checks.len(), // After (test_amount / 2, or half) tests have been selected from this range, this Range changes to 0..=matrix[0].checks.len()
                     }
                 },
-                Gamemode::ExtremeMode => 0..=matrix.len(),
-                Gamemode::NightmareMode => 0..=matrix.len(),
+                Gamemode::ExtremeMode => 72..=matrix[0].checks.len(), // After (test_amount / 2, or half) tests have been selected from this range, this Range changes to 0..=matrix[0].checks.len()
+                Gamemode::NightmareMode => 72..=matrix[0].checks.len(), // After (test_amount / 2, or half) tests have been selected from this range, this Range changes to 0..=matrix[0].checks.len()
             }
         },
         _ => 0..=matrix[0].checks.len(),
     };
+
+    let banned_tests: Vec<usize> = vec![];
+    let used_cards: Vec<u8> = vec![];
 
     let puzzle: Puzzle = Puzzle {
         target_code: target_code,
