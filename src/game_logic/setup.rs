@@ -9,7 +9,14 @@ pub enum Gamemode {
     NightmareMode,
 }
 
-pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, u8) {
+#[derive(Debug)]
+pub enum Difficulty {
+    Easy,
+    Standard,
+    Hard,
+}
+
+pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty) {
     // This entire function allows the user to set all of the parameters of the Puzzle that will be generated to play.
     // At the moment, only Classic Mode, Original-Parameters are supported.
     
@@ -105,30 +112,26 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, u8) {
         break;
     }
 
-    let mut test_amount: u8;
+    let mut difficulty: Difficulty;
     loop {
         let mut input = String::new();
-        println!("↓ Please input the number of tests that the puzzle shall contain (In the original game, there may be 4, 5, or 6 tests).");
+        println!("↓ Please input the difficulty setting; Your choices are \"Easy\"(e), \"Standard\"(s), and \"Hard\"(h).");
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
-        test_amount = match input.trim().parse() {
-            Ok(num) => num,
-            Err(_) => {
-                println!("Invalid test number entered \"{}\"", input.trim());
+        difficulty = match input.trim() {
+            "e" => Difficulty::Easy ,
+            "s" => Difficulty::Standard ,
+            "h" => Difficulty::Hard ,
+            _ => {
+                println!("Invalid difficulty selection \"{}\"", input.trim());
                 continue;
             }
         };
-        match test_amount {
-            4 | 5 | 6 => break,
-            _ => {
-                println!("Chosen number of tests not implemented \"{}\"", test_amount);
-                continue;
-            }
-        }
+        break;
     }
 
-    return (min_code, max_code, min_digit, max_digit, mode, test_amount);
+    return (min_code, max_code, min_digit, max_digit, mode, difficulty);
 }
 
 pub fn is_valid_turing_code(
@@ -188,7 +191,7 @@ pub fn generate_results_matrix(
         use crate::game_logic::game_variants::*;
         match (min_code, max_code, min_digit, max_digit) {
             (111, 555, '1', '5') => results_matrix.push(
-                len3_min1_max5::criteria_cards::evaluate_criteria_results(code.clone()),
+                len3_min1_max5::criteria_card_tests::evaluate_criteria_results(code.clone()),
             ),
             _ => {}
         }
@@ -211,7 +214,7 @@ pub fn generate_random_puzzle_code(code_length: u32, min_digit: char, max_digit:
     return target_code;
 }
 
-fn generate_unique_test_list(matrix: &[TuringCodeResults]) -> Vec<usize> {
+fn generate_unique_test_list(matrix: &Vec<TuringCodeResults>) -> Vec<usize> {
     // returns a list of every test from the various Criteria Cards for which only a single Turing Code passes.
     // The purpose of this is to ensure that no Criteria Test renders any of the other Tests in the Puzzle superfluous.
     
@@ -266,8 +269,8 @@ pub fn generate_puzzle_wrapper(
     min_code: u32,
     max_code: u32,
     matrix: &Vec<TuringCodeResults>,
-    test_amount: u8,
     mode: Gamemode,
+    difficulty: Difficulty,
     target_code: u32,
 ) -> Puzzle {
     let mut target_index: usize = 0;
@@ -279,18 +282,10 @@ pub fn generate_puzzle_wrapper(
     }
     let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(&matrix);
     let vec_unique_tests: Vec<usize> = generate_unique_test_list(&matrix);
-    let length: usize = min_code.to_string().len();
+    let code_length: usize = min_code.to_string().len();
 
-    let puzzle: Puzzle = match (min_code, max_code, length) {
-        (111, 555, 3) => len3_min1_max5::create_puzzle::puzzle_maker(
-            &matrix,
-            test_amount,
-            mode,
-            target_code,
-            target_index,
-            &vec_test_couplings,
-            &vec_unique_tests,
-        ),
+    let puzzle: Puzzle = match (min_code, max_code, code_length) {
+        (111, 555, 3) => todo!(),
         _ => todo!(),
     };
 
