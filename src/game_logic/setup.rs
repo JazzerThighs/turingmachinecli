@@ -283,12 +283,18 @@ pub fn generate_puzzle_wrapper(
     let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(&matrix);
     let vec_unique_tests: Vec<usize> = generate_unique_test_list(&matrix);
     let code_length: usize = min_code.to_string().len();
-
-    let puzzle: Puzzle = match (min_code, max_code, code_length) {
-        (111, 555, 3) => todo!(),
-        _ => todo!(),
+    let test_num: u8 = match (min_code, max_code, code_length) {
+        (111, 555, 3) => {
+            match difficulty {
+                Difficulty::Easy => 4,
+                Difficulty::Standard => 5,
+                Difficulty::Hard => 6,
+            }
+        },
+        _ => 6,
     };
 
+    let puzzle: Puzzle;
     return puzzle;
 }
 
