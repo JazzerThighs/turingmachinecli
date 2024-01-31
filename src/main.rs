@@ -17,5 +17,5 @@ fn main() {
     // min_digit = '1', max_digit = '5',
     // min_code = 111, max_code = 555;
     // The first Puzzles to be implemented will be exclusively Classic Mode Puzzles.
-    let puzzle: Puzzle = generate_puzzle_wrapper(min_code, max_code, &matrix, mode, difficulty, target_code);
+    let puzzle: Puzzle = generate_puzzle(min_code, max_code, &matrix, mode, difficulty, target_code);
 }

@@ -1,6 +1,7 @@
 use crate::game_logic::game_variants::*;
+use core::borrow;
 use rand::{rngs::ThreadRng, Rng};
-use std::{collections::HashMap, io, ops::RangeInclusive};
+use std::{collections::HashMap, io, ops::RangeInclusive, path::Iter};
 
 #[derive(Debug)]
 pub enum Gamemode {
@@ -19,7 +20,7 @@ pub enum Difficulty {
 pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty) {
     // This entire function allows the user to set all of the parameters of the Puzzle that will be generated to play.
     // At the moment, only Classic Mode, Original-Parameters are supported.
-    
+
     let mut min_digit: char;
     let mut max_digit: char;
     loop {
@@ -120,9 +121,9 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty) {
             .read_line(&mut input)
             .expect("Failed to read line");
         difficulty = match input.trim() {
-            "e" => Difficulty::Easy ,
-            "s" => Difficulty::Standard ,
-            "h" => Difficulty::Hard ,
+            "e" => Difficulty::Easy,
+            "s" => Difficulty::Standard,
+            "h" => Difficulty::Hard,
             _ => {
                 println!("Invalid difficulty selection \"{}\"", input.trim());
                 continue;
@@ -142,7 +143,7 @@ pub fn is_valid_turing_code(
     test_code: u32,
 ) -> bool {
     //Simply a reusable statement returning True if the proposed Code is valid as per the parameters passed into the program by the user.
-    
+
     return (min_code..=max_code).contains(&test_code)
         && test_code
             .to_string()
@@ -164,7 +165,7 @@ pub fn generate_number_pool(
     max_digit: char,
 ) -> Vec<u32> {
     // returns a list of every valid Turing Code as per the parameters set by the user.
-    
+
     let mut number_pool: Vec<u32> = vec![];
 
     for num in min_code..=max_code {
@@ -183,15 +184,14 @@ pub fn generate_results_matrix(
     max_digit: char,
 ) -> Vec<TuringCodeResults> {
     // Puts every Turing Code from the generate_number_pool() function through every Criteria Card's multiple Tests, and returns the resulting Vector of Structs.
-    
+
     let codes: Vec<u32> = generate_number_pool(min_code, max_code, min_digit, max_digit);
     let mut results_matrix: Vec<TuringCodeResults> = vec![];
 
     for code in codes.iter() {
         match (min_code, max_code, min_digit, max_digit) {
-            (111, 555, '1', '5') => results_matrix.push(
-                len3_min1_max5::criteria_card_tests::evaluate_criteria_results(code.clone()),
-            ),
+            (111, 555, '1', '5') => results_matrix
+                .push(len3_min1_max5::criteria_card_tests::evaluate_criteria_results(code.clone())),
             _ => {}
         }
     }
@@ -201,22 +201,47 @@ pub fn generate_results_matrix(
 
 pub fn generate_random_puzzle_code(code_length: u32, min_digit: char, max_digit: char) -> u32 {
     // returns a random valid Target Code that is the solution to the Puzzle that will be generated.
-    
+
     let mut target_code: u32 = 0;
     let mut rng: ThreadRng = rand::thread_rng();
-    
+
     for _ in 1..=code_length {
         target_code *= 10;
         target_code += rng.gen_range(min_digit..=max_digit) as u32;
     }
-    
+
     return target_code;
+}
+
+pub fn generate_test_index_from_range(
+    vec_checks: &Vec<(u8, bool)>,
+    test_pool: RangeInclusive<usize>,
+    used_cards: &Vec<u8>,
+    banned_tests: &Vec<usize>,
+) -> usize {
+    //returns a random test index where the bool is true for the given target code.
+
+    let mut test_index: usize = 0;
+    let mut rng: ThreadRng = rand::thread_rng();
+    loop {
+        let test_pool_loop = test_pool.clone();
+        test_index = rng.gen_range(test_pool_loop);
+        if vec_checks[test_index].1
+            && !used_cards.contains(&vec_checks[test_index].0)
+            && !banned_tests.contains(&test_index)
+        {
+            // The test_index must have a true result, 
+            // AND the test_index cannot be from a card that has already had a test pulled from it,
+            // AND the test_index cannot be coupled to previously added tests.
+            return test_index;
+        }
+    }
 }
 
 fn generate_unique_test_list(matrix: &Vec<TuringCodeResults>) -> Vec<usize> {
     // returns a list of every test from the various Criteria Cards for which only a single Turing Code passes.
     // The purpose of this is to ensure that no Criteria Test renders any of the other Tests in the Puzzle superfluous.
-    
+
     let mut counts: HashMap<usize, u32> = HashMap::new();
 
     for turing_code_result in matrix {
@@ -237,7 +262,7 @@ fn generate_coupled_criteria(matrix: &Vec<TuringCodeResults>) -> Vec<Vec<usize>>
     // returns a 2D array of Coupled Tests.
     // A test is coupled to another test if for every possible Turing Code, the result of Test A matches the result of Test B.
     // By definition, this renders one of the tests superfluous, and should not be paired with each other in a valid Puzzle.
-    
+
     let mut vec_test_couplings: Vec<Vec<usize>> = vec![Vec::new(); matrix[0].checks.len()];
 
     let is_coupled = |x: usize, y: usize| -> bool {
@@ -264,7 +289,7 @@ pub struct Puzzle {
     pub tests: Vec<Vec<usize>>,
 }
 
-pub fn generate_puzzle_wrapper(
+pub fn generate_puzzle(
     min_code: u32,
     max_code: u32,
     matrix: &Vec<TuringCodeResults>,
@@ -283,12 +308,10 @@ pub fn generate_puzzle_wrapper(
     let vec_unique_tests: Vec<usize> = generate_unique_test_list(&matrix);
     let code_length: usize = min_code.to_string().len();
     let test_amount: u8 = match (min_code, max_code, code_length) {
-        (111, 555, 3) => {
-            match difficulty {
-                Difficulty::Easy => 4,
-                Difficulty::Standard => 5,
-                Difficulty::Hard => 6,
-            }
+        (111, 555, 3) => match difficulty {
+            Difficulty::Easy => 4,
+            Difficulty::Standard => 5,
+            Difficulty::Hard => 6,
         },
         _ => 6,
     };
@@ -301,11 +324,11 @@ pub fn generate_puzzle_wrapper(
                         Difficulty::Standard => 0..=71,
                         Difficulty::Hard => 72..=matrix[0].checks.len(), // After (test_amount / 2, or half) tests have been selected from this range, this Range changes to 0..=matrix[0].checks.len()
                     }
-                },
+                }
                 Gamemode::ExtremeMode => 72..=matrix[0].checks.len(), // After (test_amount / 2, or half) tests have been selected from this range, this Range changes to 0..=matrix[0].checks.len()
                 Gamemode::NightmareMode => 72..=matrix[0].checks.len(), // After (test_amount / 2, or half) tests have been selected from this range, this Range changes to 0..=matrix[0].checks.len()
             }
-        },
+        }
         _ => 0..=matrix[0].checks.len(),
     };
 
