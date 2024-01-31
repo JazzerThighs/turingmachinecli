@@ -1,6 +1,6 @@
 use crate::game_logic::game_variants::*;
 use rand::{rngs::ThreadRng, Rng};
-use std::{collections::HashMap, io};
+use std::{collections::HashMap, io, ops::RangeInclusive};
 
 #[derive(Debug)]
 pub enum Gamemode {
@@ -188,7 +188,6 @@ pub fn generate_results_matrix(
     let mut results_matrix: Vec<TuringCodeResults> = vec![];
 
     for code in codes.iter() {
-        use crate::game_logic::game_variants::*;
         match (min_code, max_code, min_digit, max_digit) {
             (111, 555, '1', '5') => results_matrix.push(
                 len3_min1_max5::criteria_card_tests::evaluate_criteria_results(code.clone()),
@@ -283,7 +282,7 @@ pub fn generate_puzzle_wrapper(
     let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(&matrix);
     let vec_unique_tests: Vec<usize> = generate_unique_test_list(&matrix);
     let code_length: usize = min_code.to_string().len();
-    let test_num: u8 = match (min_code, max_code, code_length) {
+    let test_amount: u8 = match (min_code, max_code, code_length) {
         (111, 555, 3) => {
             match difficulty {
                 Difficulty::Easy => 4,
@@ -293,8 +292,27 @@ pub fn generate_puzzle_wrapper(
         },
         _ => 6,
     };
+    let test_pool: RangeInclusive<usize> = match (min_code, max_code, code_length) {
+        (111, 555, 3) => {
+            match mode {
+                Gamemode::ClassicMode => {
+                    match difficulty {
+                        Difficulty::Easy => 0..=71,
+                        Difficulty::Standard => 0..=71,
+                        Difficulty::Hard => 72..=matrix.len(),
+                    }
+                },
+                Gamemode::ExtremeMode => 0..=matrix.len(),
+                Gamemode::NightmareMode => 0..=matrix.len(),
+            }
+        },
+        _ => 0..=matrix[0].checks.len(),
+    };
 
-    let puzzle: Puzzle;
+    let puzzle: Puzzle = Puzzle {
+        target_code: target_code,
+        tests: vec![Vec::new(); test_amount as usize],
+    };
     return puzzle;
 }
 
