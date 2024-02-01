@@ -1,7 +1,6 @@
 use crate::game_logic::game_variants::*;
-use core::borrow;
 use rand::{rngs::ThreadRng, Rng};
-use std::{collections::HashMap, io, ops::RangeInclusive, path::Iter};
+use std::{collections::HashMap, io, ops::RangeInclusive, time::{Duration, Instant}};
 
 #[derive(Debug)]
 pub enum Gamemode {
@@ -17,7 +16,7 @@ pub enum Difficulty {
     Hard,
 }
 
-pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty) {
+pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8, bool) {
     // This entire function allows the user to set all of the parameters of the Puzzle that will be generated to play.
     // At the moment, only Classic Mode, Original-Parameters are supported.
 
@@ -33,7 +32,9 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty) {
             .read_line(&mut input)
             .expect("Failed to read line");
         min_digit = match input.trim() {
-            "1" | "2" | "3" | "4" => input.trim().chars().next().expect("empty input"),
+            "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => {
+                input.trim().chars().next().expect("empty input")
+            }
             _ => {
                 println!("Invalid smallest digit character \"{}\"", input.trim());
                 continue;
@@ -46,7 +47,9 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty) {
             .read_line(&mut input)
             .expect("Failed to read line");
         max_digit = match input.trim() {
-            "2" | "3" | "4" | "5" => input.trim().chars().next().expect("empty input"),
+            "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => {
+                input.trim().chars().next().expect("empty input")
+            }
             _ => {
                 println!("Invalid largest digit character \"{}\"", input.trim());
                 continue;
@@ -113,7 +116,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty) {
         break;
     }
 
-    let mut difficulty: Difficulty;
+    let difficulty: Difficulty;
     loop {
         let mut input = String::new();
         println!("↓ Please input the difficulty setting; Your choices are \"Easy\"(e), \"Standard\"(s), and \"Hard\"(h).");
@@ -132,7 +135,50 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty) {
         break;
     }
 
-    return (min_code, max_code, min_digit, max_digit, mode, difficulty);
+    let test_amount: u8;
+    loop {
+        let mut input = String::new();
+        println!("↓ Please input the number of sections on the machine that are assigned Criteria Verifiers (In the original game, this is from 4 to 6, inclusive)");
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read line");
+        test_amount = match input.trim().parse() {
+            Ok(num) => num,
+            Err(_) => {
+                println!("Invalid criteria test amount entered \"{}\"", input.trim());
+                continue;
+            }
+        };
+        break;
+    }
+
+    let og_tm_game: bool = match (min_code, max_code, code_length) {
+        (111, 555, 3) => {
+            let mut input = String::new();
+            println!(
+                "Are you trying to play a game of the Original \"Turing Machine\" board game?"
+            );
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read line");
+            match input.trim() {
+                "y" => true,
+                _ => false,
+            }
+        }
+        _ => false,
+    };
+
+    return (
+        min_code,
+        max_code,
+        min_digit,
+        max_digit,
+        mode,
+        difficulty,
+        test_amount,
+        og_tm_game,
+    );
 }
 
 pub fn is_valid_turing_code(
@@ -151,7 +197,7 @@ pub fn is_valid_turing_code(
             .all(|c| c >= min_digit && c <= max_digit);
 }
 
-pub struct TuringCodeResults {
+pub struct TuringCodeEval {
     // Structure to pair every individual Turing Code with an array of booleans as it is put through every Test on every Criteria Card.
     // This is replacing the pre-calculated Punch Cards used for querying the Turing Machine's Verifier Cards.
     pub code: u32,
@@ -182,11 +228,11 @@ pub fn generate_results_matrix(
     max_code: u32,
     min_digit: char,
     max_digit: char,
-) -> Vec<TuringCodeResults> {
+) -> Vec<TuringCodeEval> {
     // Puts every Turing Code from the generate_number_pool() function through every Criteria Card's multiple Tests, and returns the resulting Vector of Structs.
 
     let codes: Vec<u32> = generate_number_pool(min_code, max_code, min_digit, max_digit);
-    let mut results_matrix: Vec<TuringCodeResults> = vec![];
+    let mut results_matrix: Vec<TuringCodeEval> = vec![];
 
     for code in codes.iter() {
         match (min_code, max_code, min_digit, max_digit) {
@@ -207,38 +253,14 @@ pub fn generate_random_puzzle_code(code_length: u32, min_digit: char, max_digit:
 
     for _ in 1..=code_length {
         target_code *= 10;
-        target_code += rng.gen_range(min_digit..=max_digit) as u32;
+        target_code +=
+            rng.gen_range(min_digit.to_digit(10).unwrap()..=max_digit.to_digit(10).unwrap()) as u32;
     }
 
     return target_code;
 }
 
-pub fn generate_test_index_from_range(
-    vec_checks: &Vec<(u8, bool)>,
-    test_pool: RangeInclusive<usize>,
-    used_cards: &Vec<u8>,
-    banned_tests: &Vec<usize>,
-) -> usize {
-    //returns a random test index where the bool is true for the given target code.
-
-    let mut test_index: usize = 0;
-    let mut rng: ThreadRng = rand::thread_rng();
-    loop {
-        let test_pool_loop = test_pool.clone();
-        test_index = rng.gen_range(test_pool_loop);
-        if vec_checks[test_index].1
-            && !used_cards.contains(&vec_checks[test_index].0)
-            && !banned_tests.contains(&test_index)
-        {
-            // The test_index must have a true result, 
-            // AND the test_index cannot be from a card that has already had a test pulled from it,
-            // AND the test_index cannot be coupled to previously added tests.
-            return test_index;
-        }
-    }
-}
-
-fn generate_unique_test_list(matrix: &Vec<TuringCodeResults>) -> Vec<usize> {
+fn generate_unique_test_list(matrix: &Vec<TuringCodeEval>) -> Vec<usize> {
     // returns a list of every test from the various Criteria Cards for which only a single Turing Code passes.
     // The purpose of this is to ensure that no Criteria Test renders any of the other Tests in the Puzzle superfluous.
 
@@ -258,7 +280,7 @@ fn generate_unique_test_list(matrix: &Vec<TuringCodeResults>) -> Vec<usize> {
         .collect();
 }
 
-fn generate_coupled_criteria(matrix: &Vec<TuringCodeResults>) -> Vec<Vec<usize>> {
+fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
     // returns a 2D array of Coupled Tests.
     // A test is coupled to another test if for every possible Turing Code, the result of Test A matches the result of Test B.
     // By definition, this renders one of the tests superfluous, and should not be paired with each other in a valid Puzzle.
@@ -289,13 +311,59 @@ pub struct Puzzle {
     pub tests: Vec<Vec<usize>>,
 }
 
+fn generate_test_index_from_range(
+    vec_checks: &Vec<(u8, bool)>,
+    test_pool: RangeInclusive<usize>,
+    used_cards: &Vec<u8>,
+    banned_tests: &Vec<usize>,
+) -> usize {
+    //returns a random test index where the bool is true for the given target code.
+
+    let mut test_index: usize = 0;
+    let mut rng: ThreadRng = rand::thread_rng();
+    loop {
+        let test_pool_loop = test_pool.clone();
+        test_index = rng.gen_range(test_pool_loop);
+        if vec_checks[test_index].1
+            && !used_cards.contains(&vec_checks[test_index].0)
+            && !banned_tests.contains(&test_index)
+        {
+            // The test_index must have a true result,
+            // AND the test_index cannot be from a card that has already had a test pulled from it,
+            // AND the test_index cannot be coupled to previously added tests.
+            return test_index;
+        }
+    }
+}
+
+fn is_unique_solution(
+    target_index: &usize,
+    puzzle_tests: &Vec<Vec<usize>>,
+    matrix: &Vec<TuringCodeEval>,
+) -> bool {
+    // returns true if passed puzzle_tests is a unique set of true booleans.
+
+    for (index, turing_code_result) in matrix.iter().enumerate() {
+        let all_true: bool = puzzle_tests.iter().all(|test| {
+            test.iter()
+                .all(|&i| turing_code_result.checks.get(i).map_or(false, |&(_, b)| b))
+        });
+
+        if all_true && &index != target_index {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 pub fn generate_puzzle(
-    min_code: u32,
-    max_code: u32,
-    matrix: &Vec<TuringCodeResults>,
-    mode: Gamemode,
-    difficulty: Difficulty,
+    matrix: &Vec<TuringCodeEval>,
+    mode: &Gamemode,
+    difficulty: &Difficulty,
+    test_amount: u8,
     target_code: u32,
+    og_tm_game: bool,
 ) -> Puzzle {
     let mut target_index: usize = 0;
     for index in 0..matrix.len() {
@@ -305,40 +373,86 @@ pub fn generate_puzzle(
         }
     }
     let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(&matrix);
-    let vec_unique_tests: Vec<usize> = generate_unique_test_list(&matrix);
-    let code_length: usize = min_code.to_string().len();
-    let test_amount: u8 = match (min_code, max_code, code_length) {
-        (111, 555, 3) => match difficulty {
-            Difficulty::Easy => 4,
-            Difficulty::Standard => 5,
-            Difficulty::Hard => 6,
-        },
-        _ => 6,
-    };
-    let test_pool: RangeInclusive<usize> = match (min_code, max_code, code_length) {
-        (111, 555, 3) => {
-            match mode {
-                Gamemode::ClassicMode => {
-                    match difficulty {
-                        Difficulty::Easy => 0..=71,
-                        Difficulty::Standard => 0..=71,
-                        Difficulty::Hard => 72..=matrix[0].checks.len(), // After (test_amount / 2, or half) tests have been selected from this range, this Range changes to 0..=matrix[0].checks.len()
-                    }
-                }
-                Gamemode::ExtremeMode => 72..=matrix[0].checks.len(), // After (test_amount / 2, or half) tests have been selected from this range, this Range changes to 0..=matrix[0].checks.len()
-                Gamemode::NightmareMode => 72..=matrix[0].checks.len(), // After (test_amount / 2, or half) tests have been selected from this range, this Range changes to 0..=matrix[0].checks.len()
-            }
-        }
-        _ => 0..=matrix[0].checks.len(),
-    };
-
-    let banned_tests: Vec<usize> = vec![];
-    let used_cards: Vec<u8> = vec![];
-
-    let puzzle: Puzzle = Puzzle {
+    // let vec_unique_tests: Vec<usize> = generate_unique_test_list(&matrix);
+    // let code_length: usize = min_code.to_string().len();
+    let last_index: usize = matrix[0].checks.len() - 1;
+    let mut banned_tests: Vec<usize> = vec![];
+    let mut used_cards: Vec<u8> = vec![];
+    let mut puzzle: Puzzle = Puzzle {
         target_code: target_code,
         tests: vec![Vec::new(); test_amount as usize],
     };
+    let mut tests_added: usize = 0;
+    let half_plus_one: u8 = match test_amount % 2 {
+        0 => test_amount / 2,
+        _ => (test_amount / 2) + 1,
+    };
+    println!("Generating the puzzle...");
+    let mut start_time = Instant::now();
+    let timeout = Duration::new(3, 0);
+    loop {
+        if start_time.elapsed() > timeout {
+            println!("Timeout reached. Resetting puzzle generation...");
+            tests_added = 0;
+            puzzle.tests = vec![Vec::new(); test_amount as usize];
+            banned_tests.clear();
+            used_cards.clear();
+            start_time = Instant::now();
+        }    
+        let mut test_pool: RangeInclusive<usize> = match (&og_tm_game, &difficulty, &mode) {
+            (true, _, Gamemode::ExtremeMode) => 0..=last_index.clone(),
+            (true, Difficulty::Easy, _) | (true, Difficulty::Standard, _) => 0..=71,
+            (true, _, Gamemode::ClassicMode) | (true, _, Gamemode::NightmareMode) => {
+                72..=last_index.clone()
+            }
+            _ => 0..=last_index.clone(),
+        };
+        if og_tm_game {
+            match &difficulty {
+                Difficulty::Hard => {
+                    if tests_added >= half_plus_one as usize {
+                        test_pool = 0..=last_index.clone();
+                    };
+                }
+                _ => {}
+            }
+        }
+
+        if tests_added < test_amount as usize {
+            let new_test_index: usize = generate_test_index_from_range(
+                &matrix[target_index].checks,
+                test_pool.clone(),
+                &used_cards,
+                &banned_tests,
+            );
+            puzzle.tests[tests_added].push(new_test_index);
+            tests_added += 1;
+
+            if tests_added == test_amount as usize {
+                if !is_unique_solution(&target_index, &puzzle.tests, matrix) {
+                    tests_added -= 1;
+                    puzzle.tests[tests_added].pop();
+                } else {
+                    println!("{} test(s) added...", tests_added);
+                    break;
+                }
+            } else {
+                tests_added -= 1;
+
+                if is_unique_solution(&target_index, &puzzle.tests, matrix) {
+                    puzzle.tests[tests_added].pop();
+                } else {
+                    for index in vec_test_couplings[new_test_index].iter() {
+                        banned_tests.push(index.clone());
+                    }
+                    used_cards.push(matrix[target_index].checks[new_test_index].0.clone());
+                    tests_added += 1;
+                    println!("{} test(s) added...", tests_added);
+                }
+            }
+        }
+    }
+
     return puzzle;
 }
 
