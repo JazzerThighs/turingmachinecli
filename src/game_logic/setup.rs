@@ -389,10 +389,10 @@ pub fn generate_puzzle(
     };
     println!("Generating the puzzle...");
     let mut start_time = Instant::now();
-    let timeout = Duration::new(3, 0);
+    let timeout = Duration::new(0, 62500000);
     loop {
         if start_time.elapsed() > timeout {
-            println!("Timeout reached. Resetting puzzle generation...");
+            println!("Timeout reached. Failed at {} out of {} tests. Resetting puzzle generation...", tests_added, test_amount);
             tests_added = 0;
             puzzle.tests = vec![Vec::new(); test_amount as usize];
             banned_tests.clear();
@@ -433,7 +433,6 @@ pub fn generate_puzzle(
                     tests_added -= 1;
                     puzzle.tests[tests_added].pop();
                 } else {
-                    println!("{} test(s) added...", tests_added);
                     break;
                 }
             } else {
@@ -447,7 +446,6 @@ pub fn generate_puzzle(
                     }
                     used_cards.push(matrix[target_index].checks[new_test_index].0.clone());
                     tests_added += 1;
-                    println!("{} test(s) added...", tests_added);
                 }
             }
         }
