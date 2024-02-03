@@ -533,7 +533,7 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
     let mut test36_2 = false;
     let mut test36_3 = false;
 
-    let all_color_sum = &blue + &yellow + &purple;
+    let all_color_sum = blue + yellow + purple;
 
     if all_color_sum % 2 == 0 {
         test18_1 = true;
