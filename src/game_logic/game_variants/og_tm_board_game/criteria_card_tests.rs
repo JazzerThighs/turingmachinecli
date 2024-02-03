@@ -8,45 +8,6 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
     num /= 10;
     let blue = num;
 
-    // generic calculations
-    let all_color_sum = &blue + &yellow + &purple;
-
-    let mut even_count = 0;
-    if blue % 2 == 0 {
-        even_count += 1;
-    }
-    if yellow % 2 == 0 {
-        even_count += 1;
-    }
-    if purple % 2 == 0 {
-        even_count += 1;
-    }
-
-    let mut num_of_1s = 0;
-    let mut num_of_3s = 0;
-    let mut num_of_4s = 0;
-    if blue == 1 {
-        num_of_1s += 1;
-    } else if blue == 3 {
-        num_of_3s += 1;
-    } else if blue == 4 {
-        num_of_4s += 1;
-    }
-    if yellow == 1 {
-        num_of_1s += 1;
-    } else if yellow == 3 {
-        num_of_3s += 1;
-    } else if yellow == 4 {
-        num_of_4s += 1;
-    }
-    if purple == 1 {
-        num_of_1s += 1;
-    } else if purple == 3 {
-        num_of_3s += 1;
-    } else if purple == 4 {
-        num_of_4s += 1;
-    }
-
     // Criteria Card 1,
     // Criteria Card 2,
     // Criteria Card 3,
@@ -315,6 +276,31 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
     let mut test47_5 = false;
     let mut test47_6 = false;
 
+    let mut num_of_1s = 0;
+    let mut num_of_3s = 0;
+    let mut num_of_4s = 0;
+    if blue == 1 {
+        num_of_1s += 1;
+    } else if blue == 3 {
+        num_of_3s += 1;
+    } else if blue == 4 {
+        num_of_4s += 1;
+    }
+    if yellow == 1 {
+        num_of_1s += 1;
+    } else if yellow == 3 {
+        num_of_3s += 1;
+    } else if yellow == 4 {
+        num_of_4s += 1;
+    }
+    if purple == 1 {
+        num_of_1s += 1;
+    } else if purple == 3 {
+        num_of_3s += 1;
+    } else if purple == 4 {
+        num_of_4s += 1;
+    }
+
     match num_of_1s {
         0 => {
             test8_1 = true;
@@ -502,6 +488,17 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
     let mut test17_3 = false;
     let mut test17_4 = false;
 
+    let mut even_count = 0;
+    if blue % 2 == 0 {
+        even_count += 1;
+    }
+    if yellow % 2 == 0 {
+        even_count += 1;
+    }
+    if purple % 2 == 0 {
+        even_count += 1;
+    }
+
     match even_count {
         0 => {
             test17_1 = true;
@@ -523,13 +520,20 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
     }
 
     // Criteria Card 18,
+    // Criteria Card 23,
     // Criteria Card 36
     let mut test18_1 = false;
     let mut test18_2 = false;
 
+    let mut test23_1 = false;
+    let mut test23_2 = false;
+    let mut test23_3 = false;
+
     let mut test36_1 = false;
     let mut test36_2 = false;
     let mut test36_3 = false;
+
+    let all_color_sum = &blue + &yellow + &purple;
 
     if all_color_sum % 2 == 0 {
         test18_1 = true;
@@ -540,13 +544,19 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
     if all_color_sum % 3 == 0 {
         test36_1 = true;
     }
-
     if all_color_sum % 4 == 0 {
         test36_2 = true;
     }
-
     if all_color_sum % 5 == 0 {
         test36_3 = true;
+    }
+
+    if all_color_sum < 6 {
+        test23_1 = true;
+    } else if all_color_sum == 6 {
+        test23_2 = true;
+    } else {
+        test23_3 = true;
     }
 
     // Criteria Card 19,
@@ -590,12 +600,12 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
 
     // Criteria Card 20,
     // Criteria Card 21
-    let mut test20_1 = false; // a triple number code
-    let mut test20_2 = false; // a double number code
-    let mut test20_3 = false; // no repetition in the code
+    let mut test20_1 = false;
+    let mut test20_2 = false;
+    let mut test20_3 = false;
 
-    let mut test21_1 = false; // no pairs || 3 of a kind
-    let mut test21_2 = false; // a pair
+    let mut test21_1 = false;
+    let mut test21_2 = false;
 
     let mut num_repetitions = 0;
     if blue == yellow {
@@ -634,19 +644,6 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         test22_2 = true;
     } else {
         test22_3 = true;
-    }
-
-    // Criteria Card 23
-    let mut test23_1 = false;
-    let mut test23_2 = false;
-    let mut test23_3 = false;
-
-    if all_color_sum < 6 {
-        test23_1 = true;
-    } else if all_color_sum == 6 {
-        test23_2 = true;
-    } else {
-        test23_3 = true;
     }
 
     // Criteria Card 24
