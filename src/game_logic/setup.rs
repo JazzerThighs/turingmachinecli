@@ -1,7 +1,7 @@
 use crate::game_logic::game_variants::*;
 use rand::{rngs::ThreadRng, Rng};
 use std::{
-    collections::HashMap,
+    collections::{btree_map::Range, HashMap},
     io,
     ops::RangeInclusive,
     time::{Duration, Instant},
@@ -9,9 +9,9 @@ use std::{
 
 #[derive(Debug)]
 pub enum Gamemode {
-    ClassicMode,
-    ExtremeMode,
-    NightmareMode,
+    Classic,
+    Extreme,
+    Nightmare,
 }
 
 #[derive(Debug)]
@@ -110,9 +110,9 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
             .read_line(&mut input)
             .expect("Failed to read line");
         mode = match input.trim() {
-            "c" => Gamemode::ClassicMode,
-            "e" => Gamemode::ExtremeMode,
-            "n" => Gamemode::NightmareMode,
+            "c" => Gamemode::Classic,
+            "e" => Gamemode::Extreme,
+            "n" => Gamemode::Nightmare,
             _ => {
                 println!("Invalid mode selection \"{}\"", input.trim());
                 continue;
@@ -233,7 +233,7 @@ pub fn generate_results_matrix(
     max_code: u32,
     min_digit: char,
     max_digit: char,
-    og_tm_game: bool
+    og_tm_game: bool,
 ) -> Vec<TuringCodeEval> {
     // Puts every Turing Code from the generate_number_pool() function through every Criteria Card's multiple Tests, and returns the resulting Vector of Structs.
 
@@ -242,8 +242,9 @@ pub fn generate_results_matrix(
 
     if og_tm_game {
         for code in codes.iter() {
-            results_matrix
-                .push(og_tm_board_game::criteria_card_tests::evaluate_criteria_results(code.clone()))
+            results_matrix.push(
+                og_tm_board_game::criteria_card_tests::evaluate_criteria_results(code.clone()),
+            )
         }
     }
     //else {
@@ -274,70 +275,6 @@ pub fn generate_random_puzzle_code(code_length: u32, min_digit: char, max_digit:
     return target_code;
 }
 
-fn generate_unique_test_list(matrix: &Vec<TuringCodeEval>) -> Vec<usize> {
-    // returns a list of every test from the various Criteria Cards for which only a single Turing Code passes.
-    // The purpose of this is to ensure that no Criteria Test renders any of the other Tests in the Puzzle superfluous.
-
-    let mut counts: HashMap<usize, u32> = HashMap::new();
-
-    for turing_code_eval in matrix {
-        for (index, (_, value)) in turing_code_eval.checks.iter().enumerate() {
-            if *value {
-                *counts.entry(index).or_insert(0) += 1;
-            }
-        }
-    }
-
-    return counts
-        .into_iter()
-        .filter_map(|(index, count)| if count == 1 { Some(index) } else { None })
-        .collect();
-}
-
-pub fn print_true_instances(matrix: &[TuringCodeEval]) {
-    let mut counts: HashMap<usize, u32> = HashMap::new();
-    let mut last_index = 0;
-
-    // Calculate the counts of true values and find the last index
-    for turing_code_result in matrix {
-        for (index, (_, value)) in turing_code_result.checks.iter().enumerate() {
-            if *value {
-                *counts.entry(index).or_insert(0) += 1;
-            }
-            last_index = last_index.max(index); // Ensure we capture the highest index
-        }
-    }
-
-    // Print the counts for each index, ensuring order from 0 to last_index
-    for index in 0..=last_index {
-        if let Some(count) = counts.get(&index) {
-            let card_number = if let Some((card_number, _)) = matrix[0].checks.get(index) {
-                *card_number
-            } else {
-                0 // Default to 0 if not found, though this case should ideally not occur
-            };
-
-            println!(
-                "Card {:03} of {:03}, Test {:03} of {:03}: {:04} TRUE Instances.",
-                card_number, 
-                matrix[0].checks.last().map_or(0, |(num, _)| *num), // Extract the last card number
-                index,
-                last_index,
-                count
-            );
-        } else {
-            // In case there's an index with 0 TRUE instances, we still handle the formatting
-            println!(
-                "Card {:03} of {:03}, Test {:03} of {:03}: 0 TRUE Instances.", 
-                matrix[0].checks.get(index).map_or(0, |(num, _)| *num),
-                matrix[0].checks.last().map_or(0, |(num, _)| *num),
-                index,
-                last_index
-            );
-        }
-    }
-}
-
 fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
     // returns a 2D array of Coupled Tests.
     // A test is coupled to another test if for every possible Turing Code, the result of Test A matches the result of Test B.
@@ -362,11 +299,75 @@ fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
     return vec_test_couplings;
 }
 
+fn generate_unique_test_list(matrix: &Vec<TuringCodeEval>) -> Vec<usize> {
+    // returns a list of every test from the various Criteria Cards for which only a single Turing Code passes.
+    // The purpose of this is to ensure that no Criteria Test renders any of the other Tests in the Puzzle superfluous.
+
+    let mut counts: HashMap<usize, u32> = HashMap::new();
+
+    for turing_code_eval in matrix {
+        for (index, (_, value)) in turing_code_eval.checks.iter().enumerate() {
+            if *value {
+                *counts.entry(index).or_insert(0) += 1;
+            }
+        }
+    }
+
+    return counts
+        .into_iter()
+        .filter_map(|(index, count)| if count == 1 { Some(index) } else { None })
+        .collect();
+}
+
+
+
 pub struct Puzzle {
     // WIP struct to contain all of the necessary data for the Puzzle that is generated by the associated algorithm
     // Should be an enum containing all of the different variations of the Game's Puzzles
     pub target_code: u32,
     pub tests: Vec<usize>,
+}
+
+fn set_test_pool_range(
+    og_tm_game: bool,
+    last_index: usize,
+    mode: &Gamemode,
+    difficulty: &Difficulty,
+    second_half_of_puzzle: &bool,
+) -> RangeInclusive<usize> {
+    let test_pool: RangeInclusive<usize>;
+
+    if og_tm_game {
+        if !second_half_of_puzzle {
+            test_pool = match (mode, difficulty) {
+                (Gamemode::Classic, Difficulty::Easy) => 0..=49,
+                (Gamemode::Classic, Difficulty::Standard) => 17..=62,
+                (Gamemode::Classic, Difficulty::Hard) => 69..=last_index,
+                (Gamemode::Extreme, Difficulty::Easy) => 29..=71,
+                (Gamemode::Extreme, Difficulty::Standard) => 29..=71,
+                (Gamemode::Extreme, Difficulty::Hard) => 63..=last_index,
+                (Gamemode::Nightmare, Difficulty::Easy) => 29..=49,
+                (Gamemode::Nightmare, Difficulty::Standard) => 18..=62,
+                (Gamemode::Nightmare, Difficulty::Hard) => 66..=last_index,
+            }
+        } else {
+            test_pool = match (mode, difficulty) {
+                (Gamemode::Classic, Difficulty::Easy) => 0..=49,
+                (Gamemode::Classic, Difficulty::Standard) => 0..=62,
+                (Gamemode::Classic, Difficulty::Hard) => 0..=last_index,
+                (Gamemode::Extreme, Difficulty::Easy) => 0..=71,
+                (Gamemode::Extreme, Difficulty::Standard) => 0..=71,
+                (Gamemode::Extreme, Difficulty::Hard) => 0..=last_index,
+                (Gamemode::Nightmare, Difficulty::Easy) => 0..=49,
+                (Gamemode::Nightmare, Difficulty::Standard) => 0..=62,
+                (Gamemode::Nightmare, Difficulty::Hard) => 0..=last_index,
+            }
+        }
+    } else {
+        test_pool = 0..=last_index;
+    }
+
+    return test_pool;
 }
 
 fn generate_test_index_from_range(
@@ -433,14 +434,14 @@ pub fn generate_puzzle(
     let last_index: usize = matrix[0].checks.len() - 1;
     for unique_banned_test in vec_unique_tests.iter() {
         println!(
-            "Banned Test for uniqueness: Card {}/{}, Test {}/{};", 
-            matrix[0].checks[*unique_banned_test].0, 
-            matrix[0].checks[last_index].0, 
+            "Banned Test for uniqueness: Card {}/{}, Test {}/{};",
+            matrix[0].checks[*unique_banned_test].0,
+            matrix[0].checks[last_index].0,
             &unique_banned_test,
             &last_index
         );
     }
-    let code_length: usize = matrix[0].code.to_string().len();
+    // let code_length: usize = matrix[0].code.to_string().len();
     let last_index: usize = matrix[0].checks.len() - 1;
     let mut banned_tests: Vec<usize> = vec_unique_tests.clone();
     let mut used_cards: Vec<u8> = vec![];
@@ -449,10 +450,12 @@ pub fn generate_puzzle(
         tests: vec![],
     };
     let mut tests_added: usize = 0;
-    let half_plus_one: u8 = match test_amount % 2 {
+    let half_tests: u8 = match test_amount % 2 {
         0 => test_amount / 2,
         _ => (test_amount / 2) + 1,
     };
+    let mut second_half_of_puzzle: bool = false;
+
     print!("Generating the puzzle...");
     let timeout: Duration = Duration::new(0, 100_000_000);
     let mut start_time: Instant = Instant::now();
@@ -468,58 +471,91 @@ pub fn generate_puzzle(
             used_cards.clear();
             start_time = Instant::now();
         }
-        let mut test_pool: RangeInclusive<usize> = match (&og_tm_game, &difficulty, &mode) {
-            (true, _, Gamemode::ExtremeMode) => 0..=last_index.clone(),
-            (true, Difficulty::Easy, _) | (true, Difficulty::Standard, _) => 0..=71,
-            (true, _, Gamemode::ClassicMode) | (true, _, Gamemode::NightmareMode) => {
-                72..=last_index.clone()
-            }
-            _ => 0..=last_index.clone(),
-        };
-        if og_tm_game {
-            match &difficulty {
-                Difficulty::Hard => {
-                    if tests_added >= half_plus_one as usize {
-                        test_pool = 0..=last_index.clone();
-                    };
-                }
-                _ => {}
-            }
+        
+        if tests_added >= half_tests as usize {
+            second_half_of_puzzle = true;
         }
 
-        if tests_added < test_amount as usize {
-            let new_test_index: usize = generate_test_index_from_range(
-                &matrix[target_index].checks,
-                test_pool.clone(),
-                &used_cards,
-                &banned_tests,
-            );
-            puzzle.tests.push(new_test_index);
-            tests_added += 1;
+        let test_pool: RangeInclusive<usize> = set_test_pool_range(
+            og_tm_game,
+            last_index,
+            mode,
+            difficulty,
+            &second_half_of_puzzle,
+        );
 
-            if tests_added == test_amount as usize {
-                if !is_unique_solution(&target_index, &puzzle.tests, matrix) {
-                    tests_added -= 1;
-                    puzzle.tests.pop();
-                } else {
-                    println!();
-                    break;
-                }
-            } else {
+        let new_test_index: usize = generate_test_index_from_range(
+            &matrix[target_index].checks,
+            test_pool,
+            &used_cards,
+            &banned_tests,
+        );
+        puzzle.tests.push(new_test_index);
+        tests_added += 1;
+
+        if tests_added == test_amount as usize {
+            if !is_unique_solution(&target_index, &puzzle.tests, matrix) {
                 tests_added -= 1;
+                puzzle.tests.pop();
+            } else {
+                println!();
+                break;
+            }
+        } else {
+            tests_added -= 1;
 
-                if is_unique_solution(&target_index, &puzzle.tests, matrix) {
-                    puzzle.tests.pop();
-                } else {
-                    for index in vec_test_couplings[new_test_index].iter() {
-                        banned_tests.push(index.clone());
-                    }
-                    used_cards.push(matrix[target_index].checks[new_test_index].0.clone());
-                    tests_added += 1;
+            if is_unique_solution(&target_index, &puzzle.tests, matrix) {
+                puzzle.tests.pop();
+            } else {
+                for index in vec_test_couplings[new_test_index].iter() {
+                    banned_tests.push(index.clone());
                 }
+                used_cards.push(matrix[target_index].checks[new_test_index].0.clone());
+                tests_added += 1;
             }
         }
     }
 
     return puzzle;
 }
+
+// pub fn print_true_instances(matrix: &[TuringCodeEval]) {
+//     let mut counts: HashMap<usize, u32> = HashMap::new();
+//     let mut last_index = 0;
+//     // Calculate the counts of true values and find the last index
+//     for turing_code_result in matrix {
+//         for (index, (_, value)) in turing_code_result.checks.iter().enumerate() {
+//             if *value {
+//                 *counts.entry(index).or_insert(0) += 1;
+//             }
+//             last_index = last_index.max(index); // Ensure we capture the highest index
+//         }
+//     }
+//     // Print the counts for each index, ensuring order from 0 to last_index
+//     for index in 0..=last_index {
+//         if let Some(count) = counts.get(&index) {
+//             let card_number = if let Some((card_number, _)) = matrix[0].checks.get(index) {
+//                 *card_number
+//             } else {
+//                 0 // Default to 0 if not found, though this case should ideally not occur
+//             };
+//             println!(
+//                 "Card {:03} of {:03}, Test {:03} of {:03}: {:04} TRUE Instances.",
+//                 card_number,
+//                 matrix[0].checks.last().map_or(0, |(num, _)| *num), // Extract the last card number
+//                 index,
+//                 last_index,
+//                 count
+//             );
+//         } else {
+//             // In case there's an index with 0 TRUE instances, we still handle the formatting
+//             println!(
+//                 "Card {:03} of {:03}, Test {:03} of {:03}: 0 TRUE Instances.",
+//                 matrix[0].checks.get(index).map_or(0, |(num, _)| *num),
+//                 matrix[0].checks.last().map_or(0, |(num, _)| *num),
+//                 index,
+//                 last_index
+//             );
+//         }
+//     }
+// }
