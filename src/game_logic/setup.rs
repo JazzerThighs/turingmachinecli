@@ -27,79 +27,106 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
 
     let mut min_digit: char;
     let mut max_digit: char;
-    loop {
-        let mut input = String::new();
-
-        println!(
-            "↓ Please input the smallest digit character (In the original game, this is '1')."
-        );
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-        min_digit = match input.trim() {
-            "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => {
-                input.trim().chars().next().expect("empty input")
-            }
-            _ => {
-                println!("Invalid smallest digit character \"{}\"", input.trim());
-                continue;
-            }
-        };
-
-        let mut input = String::new();
-        println!("↓ Please input the largest digit character (In the original game, this is '5').");
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-        max_digit = match input.trim() {
-            "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => {
-                input.trim().chars().next().expect("empty input")
-            }
-            _ => {
-                println!("Invalid largest digit character \"{}\"", input.trim());
-                continue;
-            }
-        };
-        if max_digit <= min_digit {
-            println!(
-                "Largest digit character must be greater than smallest digit character: {} <= {}",
-                max_digit, min_digit
-            );
-            continue;
-        }
-        break;
-    }
-
     let mut code_length: u8;
-    loop {
-        let mut input = String::new();
-        println!("↓ Please input the number of digits in the valid codes (In the original game, this is 3, resulting in codes ranging from 111 to 555, inclusive).");
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-        code_length = match input.trim().parse() {
-            Ok(num) => num,
-            Err(_) => {
-                println!("Invalid code length entered \"{}\"", input.trim());
-                continue;
-            }
-        };
-        match code_length {
-            3 => break,
-            _ => {
-                println!("Chosen length not implemented \"{}\"", code_length);
-                continue;
-            }
-        }
-    }
-
     let mut min_code: u32 = 0;
     let mut max_code: u32 = 0;
-    for _ in 1..=code_length {
-        min_code *= 10;
-        min_code += min_digit.to_digit(10).unwrap();
-        max_code *= 10;
-        max_code += max_digit.to_digit(10).unwrap();
+
+    let mut og_tm_game: bool;
+    loop {
+        let mut input = String::new();
+        println!("Are you trying to play a game of the Original \"Turing Machine\" board game?");
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read line");
+        match input.trim() {
+            "y" => {
+                og_tm_game = true;
+                min_digit = '1';
+                max_digit = '5';
+                code_length = 3;
+                min_code = 111;
+                max_code = 555;
+                break;
+            }
+            
+            "n" => {
+                og_tm_game = false;
+
+                loop {
+                    let mut input = String::new();
+
+                    println!(
+                        "↓ Please input the smallest digit character (In the original game, this is '1')."
+                    );
+                    io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+                    min_digit = match input.trim() {
+                        "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => input.trim().chars().next().expect("empty input"),
+                        _ => {
+                            println!("Invalid smallest digit character \"{}\"", input.trim());
+                            continue;
+                        }
+                    };
+
+                    let mut input = String::new();
+                    
+                    println!("↓ Please input the largest digit character (In the original game, this is '5').");
+                    io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+                    max_digit = match input.trim() {
+                        "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => input.trim().chars().next().expect("empty input"),
+                        _ => {
+                            println!("Invalid largest digit character \"{}\"", input.trim());
+                            continue;
+                        }
+                    };
+                    if max_digit <= min_digit {
+                        println!(
+                            "Largest digit character must be greater than smallest digit character: {} <= {}",
+                            max_digit, 
+                            min_digit
+                        );
+                        continue;
+                    }
+                    break;
+                }
+
+                loop {
+                    let mut input = String::new();
+                    println!("↓ Please input the number of digits in the valid codes (In the original game, this is 3, resulting in codes ranging from 111 to 555, inclusive).");
+                    io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+                    code_length = match input.trim().parse() {
+                        Ok(num) => num,
+                        Err(_) => {
+                            println!("Invalid code length entered \"{}\"", input.trim());
+                            continue;
+                        }
+                    };
+                    match code_length {
+                        3 => break,
+                        _ => {
+                            println!("Chosen length not implemented \"{}\"", code_length);
+                            continue;
+                        }
+                    }
+                }
+
+                for _ in 1..=code_length {
+                    min_code *= 10;
+                    min_code += min_digit.to_digit(10).unwrap();
+                    max_code *= 10;
+                    max_code += max_digit.to_digit(10).unwrap();
+                }
+            }
+            _ => {
+                println!("Invalid input \"{}\"", input.trim());
+                continue;
+            }
+        }
     }
 
     let mode: Gamemode;
@@ -156,23 +183,6 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
         };
         break;
     }
-
-    let og_tm_game: bool = match (min_code, max_code, code_length) {
-        (111, 555, 3) => {
-            let mut input = String::new();
-            println!(
-                "Are you trying to play a game of the Original \"Turing Machine\" board game?"
-            );
-            io::stdin()
-                .read_line(&mut input)
-                .expect("Failed to read line");
-            match input.trim() {
-                "y" => true,
-                _ => false,
-            }
-        }
-        _ => false,
-    };
 
     return (
         min_code,
@@ -319,8 +329,6 @@ fn generate_unique_test_list(matrix: &Vec<TuringCodeEval>) -> Vec<usize> {
         .collect();
 }
 
-
-
 pub struct Puzzle {
     // WIP struct to contain all of the necessary data for the Puzzle that is generated by the associated algorithm
     // Should be an enum containing all of the different variations of the Game's Puzzles
@@ -459,6 +467,7 @@ pub fn generate_puzzle(
     print!("Generating the puzzle...");
     let timeout: Duration = Duration::new(0, 100_000_000);
     let mut start_time: Instant = Instant::now();
+
     loop {
         if start_time.elapsed() > timeout {
             println!(
@@ -471,7 +480,7 @@ pub fn generate_puzzle(
             used_cards.clear();
             start_time = Instant::now();
         }
-        
+
         if tests_added >= half_tests as usize {
             second_half_of_puzzle = true;
         }
