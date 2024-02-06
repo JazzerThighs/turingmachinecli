@@ -408,7 +408,7 @@ fn generate_test_index_from_range(
     }
 }
 
-fn is_unique_solution(
+fn puzzle_building_validation(
     puzzle_tests: &Vec<usize>,
     matrix: &Vec<TuringCodeEval>,
     unique_solutions_needed: usize,
@@ -442,6 +442,21 @@ pub fn generate_puzzle(
     target_code: u32,
     og_tm_game: bool,
 ) -> Puzzle {
+    let last_index: usize = matrix[0].checks.len() - 1;
+    let last_card: u8 = matrix[0].checks[last_index].0;
+    match mode {
+        Gamemode::Extreme => {
+            if test_amount > ((last_card / 2) + (last_card % 2)) {
+                panic!("Number of Criteria Cards avaiable exeeds needed number of Criteria Cards assignable to Puzzle");
+            }
+        }
+        _ => {
+            if test_amount > last_card {
+                panic!("Number of Criteria Cards avaiable exeeds needed number of Criteria Cards assignable to Puzzle");
+            }
+        },
+    }
+    
     let mut target_index: usize = 0;
     for index in 0..matrix.len() {
         if matrix[index].code == target_code {
@@ -451,7 +466,7 @@ pub fn generate_puzzle(
     }
     let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(matrix);
     let vec_unique_tests: Vec<usize> = generate_unique_test_list(matrix);
-    let last_index: usize = matrix[0].checks.len() - 1;
+    
     for unique_banned_test in vec_unique_tests.iter() {
         println!(
             "Banned Test for uniqueness: Card {}/{}, Test {}/{};",
@@ -515,8 +530,8 @@ pub fn generate_puzzle(
         tests_added += 1;
 
         if tests_added == test_amount as usize {
-            // The Puzzle has all of the tests required; Time to see if it is a valid Puzzle:
-            if !is_unique_solution( &puzzle.tests, matrix, unique_solutions_needed) {
+            // The Puzzle is populated, pending a validation check:
+            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed) {
                 tests_added -= 1;
                 puzzle.tests.pop();
             } else {
@@ -527,10 +542,11 @@ pub fn generate_puzzle(
             // The Puzzle still needs more tests added after new_test_index, if new_test_index doesn't invalidate the incomplete Puzzle:
             tests_added -= 1;
 
-            if is_unique_solution( &puzzle.tests, matrix, unique_solutions_needed) {
+            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed) {
+                // new_test_index invalidates the puzzle by eliminating too many possible solutions; Redundancy would be required to complete Puzzle with new_test_index added.
                 puzzle.tests.pop();
             } else {
-                // new_test_index doesn't invalidate the incomplete Puzzle
+                // new_test_index doesn't invalidate the incomplete Puzzle; Proceed.
                 for index in vec_test_couplings[new_test_index].iter() {
                     banned_tests.push(index.clone());
                 }
