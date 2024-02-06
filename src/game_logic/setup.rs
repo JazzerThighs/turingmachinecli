@@ -412,13 +412,18 @@ fn puzzle_building_validation(
     puzzle_tests: &Vec<usize>,
     matrix: &Vec<TuringCodeEval>,
     unique_solutions_needed: usize,
+    target_index: &usize,
+    banned_tests: Vec<usize>,
+    used_cards: Vec<u8>,
+    vec_test_couplings: &Vec<Vec<usize>>,
+    test_pool: RangeInclusive<usize>
 ) -> bool {
     // returns true if puzzle_tests argument is a unique set of true booleans among all of the codes.
 
     let mut num_of_solutions: usize = 0;
 
     for (_, turing_code_result) in matrix.iter().enumerate() {
-        let all_true = puzzle_tests
+        let all_true: bool = puzzle_tests
             .iter()
             .all(|&i| turing_code_result.checks.get(i).map_or(false, |&(_, b)| b));
 
@@ -427,10 +432,31 @@ fn puzzle_building_validation(
         }
     }
 
-    if num_of_solutions > unique_solutions_needed {
+    if num_of_solutions == unique_solutions_needed && unique_solutions_needed == 1 {
+        return true;
+    } else if num_of_solutions < unique_solutions_needed {
         return false;
     } else {
-        return true;
+        // testing if there is an existing path forwards if this new_test_index is added (Future check)
+        let new_test_index: usize = puzzle_tests.len() - 1;
+        let mut tmp_banned_tests: Vec<usize> = banned_tests;
+        let mut tmp_used_cards: Vec<u8> = used_cards;
+        
+        for index in vec_test_couplings[new_test_index].iter() {
+            tmp_banned_tests.push(*index);
+        }
+        tmp_used_cards.push(matrix[*target_index].checks[new_test_index].0);
+        
+        for index in test_pool {
+            if matrix[*target_index].checks[index].1 == true
+                && !tmp_used_cards.contains(&matrix[0].checks[index].0)
+                && !tmp_banned_tests.contains(&index)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
@@ -522,7 +548,7 @@ pub fn generate_puzzle(
 
         let new_test_index: usize = generate_test_index_from_range(
             &matrix[target_index].checks,
-            test_pool,
+            test_pool.clone(),
             &used_cards,
             &banned_tests,
         );
@@ -531,7 +557,7 @@ pub fn generate_puzzle(
 
         if tests_added == test_amount as usize {
             // The Puzzle is populated, pending a validation check:
-            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed) {
+            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed, &target_index, banned_tests.clone(), used_cards.clone(), &vec_test_couplings, test_pool) {
                 tests_added -= 1;
                 puzzle.tests.pop();
             } else {
@@ -542,15 +568,15 @@ pub fn generate_puzzle(
             // The Puzzle still needs more tests added after new_test_index, if new_test_index doesn't invalidate the incomplete Puzzle:
             tests_added -= 1;
 
-            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed) {
+            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed, &target_index, banned_tests.clone(), used_cards.clone(), &vec_test_couplings, test_pool) {
                 // new_test_index invalidates the puzzle by eliminating too many possible solutions; Redundancy would be required to complete Puzzle with new_test_index added.
                 puzzle.tests.pop();
             } else {
                 // new_test_index doesn't invalidate the incomplete Puzzle; Proceed.
                 for index in vec_test_couplings[new_test_index].iter() {
-                    banned_tests.push(index.clone());
+                    banned_tests.push(*index);
                 }
-                used_cards.push(matrix[target_index].checks[new_test_index].0.clone());
+                used_cards.push(matrix[target_index].checks[new_test_index].0);
                 tests_added += 1;
             }
         }
