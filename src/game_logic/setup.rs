@@ -405,23 +405,29 @@ fn generate_test_index_from_range(
 }
 
 fn is_unique_solution(
-    target_index: &usize,
     puzzle_tests: &Vec<usize>,
     matrix: &Vec<TuringCodeEval>,
+    unique_solutions_needed: usize,
 ) -> bool {
     // returns true if puzzle_tests argument is a unique set of true booleans among all of the codes.
+
+    let mut num_of_solutions: usize = 0;
 
     for (index, turing_code_result) in matrix.iter().enumerate() {
         let all_true = puzzle_tests
             .iter()
             .all(|&i| turing_code_result.checks.get(i).map_or(false, |&(_, b)| b));
 
-        if all_true && &index != target_index {
-            return false;
+        if all_true {
+            num_of_solutions += 1;
         }
     }
 
-    return true;
+    if num_of_solutions > unique_solutions_needed {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 pub fn generate_puzzle(
@@ -439,8 +445,8 @@ pub fn generate_puzzle(
             break;
         }
     }
-    let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(&matrix);
-    let vec_unique_tests: Vec<usize> = generate_unique_test_list(&matrix);
+    let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(matrix);
+    let vec_unique_tests: Vec<usize> = generate_unique_test_list(matrix);
     let last_index: usize = matrix[0].checks.len() - 1;
     for unique_banned_test in vec_unique_tests.iter() {
         println!(
@@ -465,21 +471,23 @@ pub fn generate_puzzle(
     let mut second_half_of_puzzle: bool = false;
 
     print!("Generating the puzzle...");
-    let timeout: Duration = Duration::new(2, 500_000_000);
-    let mut start_time: Instant = Instant::now();
+    // let timeout: Duration = Duration::new(2, 500_000_000);
+    // let mut start_time: Instant = Instant::now();
 
     loop {
-        if start_time.elapsed() > timeout {
-            println!(
-                "Timeout reached. Failed at {} out of {} tests.Resetting puzzle generation...",
-                tests_added, test_amount
-            );
-            tests_added = 0;
-            puzzle.tests.clear();
-            banned_tests = vec_unique_tests.clone();
-            used_cards.clear();
-            start_time = Instant::now();
-        }
+        // if start_time.elapsed() > timeout {
+        //     println!(
+        //         "Timeout reached. Failed at {} out of {} tests.Resetting puzzle generation...",
+        //         tests_added, test_amount
+        //     );
+        //     tests_added = 0;
+        //     puzzle.tests.clear();
+        //     banned_tests = vec_unique_tests.clone();
+        //     used_cards.clear();
+        //     start_time = Instant::now();
+        // }
+
+        let unique_solutions_needed: usize = test_amount as usize - tests_added;
 
         if tests_added >= half_tests as usize {
             second_half_of_puzzle = true;
@@ -503,19 +511,22 @@ pub fn generate_puzzle(
         tests_added += 1;
 
         if tests_added == test_amount as usize {
-            if !is_unique_solution(&target_index, &puzzle.tests, matrix) {
+            // The Puzzle has all of the tests required; Time to see if it is a valid Puzzle:
+            if !is_unique_solution( &puzzle.tests, matrix, unique_solutions_needed) {
                 tests_added -= 1;
                 puzzle.tests.pop();
             } else {
-                println!();
+                println!("Successfully Created Valid Puzzle!");
                 break;
             }
         } else {
+            // The Puzzle still needs more tests added after new_test_index, if new_test_index doesn't invalidate the incomplete Puzzle:
             tests_added -= 1;
 
-            if is_unique_solution(&target_index, &puzzle.tests, matrix) {
+            if is_unique_solution( &puzzle.tests, matrix, unique_solutions_needed) {
                 puzzle.tests.pop();
             } else {
+                // new_test_index doesn't invalidate the incomplete Puzzle
                 for index in vec_test_couplings[new_test_index].iter() {
                     banned_tests.push(index.clone());
                 }
