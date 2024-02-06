@@ -1,5 +1,5 @@
 mod game_logic;
-use crate::{game_logic::*, setup::*};
+use crate::game_logic::*;
 
 fn main() {
     println!("~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~\nWelcome to the Turing Machine CLI!\n\nThis program is a personal project based off of the board game called \"Turing Machine\" designed by Fabien Gridel & Yoann Levet.\n~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~\n");
@@ -8,12 +8,16 @@ fn main() {
     let (min_code, max_code, min_digit, max_digit, mode, difficulty, test_amount, og_tm_game) =
         setup::set_game_parameters();
     println!("Minimum Code: {}, Maximum Code: {},\nSmallest Digit: {}, Largest Digit: {},\nGamemode: {:?}, Difficulty: {:?}", min_code, max_code, min_digit, max_digit, mode, difficulty);
-    let matrix: Vec<TuringCodeEval> =
-        generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
+    
+    let matrix: Vec<setup::TuringCodeEval> =
+        setup::generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
     println!("Matrix generated...");
+    // debug_helpers::print_true_instances(&matrix);
+    
     let target_code: u32 =
-        generate_random_puzzle_code(min_code.to_string().len() as u32, min_digit, max_digit);
-    let puzzle: Puzzle = generate_puzzle(
+        setup::generate_random_puzzle_code(min_code.to_string().len() as u32, min_digit, max_digit);
+    
+    let puzzle: setup::Puzzle = setup::generate_puzzle(
         &matrix,
         &mode,
         &difficulty,
@@ -21,15 +25,15 @@ fn main() {
         target_code,
         og_tm_game,
     );
-    // println!("Solution: {}", target_code);
-    // for test in puzzle.tests.iter() {
-    //     println!(
-    //         "Test: {}, Card: {}",
-    //         test,
-    //         &matrix[0].checks[test.clone()].0
-    //     );
-    // }
-    // print_true_instances(&matrix);
+    println!("Solution: {}", puzzle.target_code);
+    for test in puzzle.tests.iter() {
+        println!(
+            "Test: {}, Card: {}",
+            test,
+            &matrix[0].checks[test.clone()].0
+        );
+    }
+
 }
 
 //  TODO:
