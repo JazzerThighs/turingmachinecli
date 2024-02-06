@@ -438,7 +438,8 @@ fn puzzle_building_validation(
         return false;
     } else {
         // testing if there is an existing path forwards if this new_test_index is added (Future check)
-        let new_test_index: usize = puzzle_tests.len() - 1;
+        let last_index: usize = puzzle_tests.len() - 1;
+        let new_test_index: usize = puzzle_tests[last_index];
         let mut tmp_banned_tests: Vec<usize> = banned_tests;
         let mut tmp_used_cards: Vec<u8> = used_cards;
         
