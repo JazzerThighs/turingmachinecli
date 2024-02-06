@@ -62,7 +62,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
                 min_code = 111;
                 max_code = 555;
                 break;
-            }
+            },
             
             "N" | "n" => {
                 og_tm_game = false;
@@ -136,11 +136,12 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
                     max_code *= 10;
                     max_code += max_digit.to_digit(10).unwrap();
                 }
-            }
+            },
+            
             _ => {
                 println!("Invalid input \"{}\"", input.trim());
                 continue;
-            }
+            },
         }
     }
 
