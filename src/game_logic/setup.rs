@@ -539,7 +539,6 @@ pub fn generate_puzzle(
         if tests_added >= half_tests as usize {
             second_half_of_puzzle = true;
         }
-        
         let test_pool: RangeInclusive<usize> = set_test_pool_range(
             og_tm_game,
             last_index,
@@ -557,9 +556,20 @@ pub fn generate_puzzle(
         puzzle.tests.push(new_test_index);
         tests_added += 1;
 
+        if tests_added >= half_tests as usize {
+            second_half_of_puzzle = true;
+        }
+        let future_test_pool: RangeInclusive<usize> = set_test_pool_range(
+            og_tm_game,
+            last_index,
+            mode,
+            difficulty,
+            second_half_of_puzzle,
+        );
+
         if tests_added == test_amount as usize {
             // The Puzzle is populated, pending a validation check:
-            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed, &target_index, banned_tests.clone(), used_cards.clone(), &vec_test_couplings, test_pool) {
+            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed, &target_index, banned_tests.clone(), used_cards.clone(), &vec_test_couplings, future_test_pool) {
                 puzzle.tests.pop();
                 tests_added -= 1;
             } else {
@@ -568,7 +578,7 @@ pub fn generate_puzzle(
             }
         } else {
             // The Puzzle still needs more tests added after new_test_index, if new_test_index doesn't invalidate the incomplete Puzzle:
-            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed, &target_index, banned_tests.clone(), used_cards.clone(), &vec_test_couplings, test_pool) {
+            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed, &target_index, banned_tests.clone(), used_cards.clone(), &vec_test_couplings, future_test_pool) {
                 // new_test_index invalidates the puzzle by eliminating too many possible solutions; Redundancy would be required to complete Puzzle with new_test_index added.
                 puzzle.tests.pop();
                 tests_added -= 1;
