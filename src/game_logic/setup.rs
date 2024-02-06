@@ -559,26 +559,24 @@ pub fn generate_puzzle(
         if tests_added == test_amount as usize {
             // The Puzzle is populated, pending a validation check:
             if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed, &target_index, banned_tests.clone(), used_cards.clone(), &vec_test_couplings, test_pool) {
-                tests_added -= 1;
                 puzzle.tests.pop();
+                tests_added -= 1;
             } else {
                 println!("Successfully Created Valid Puzzle!");
                 break;
             }
         } else {
             // The Puzzle still needs more tests added after new_test_index, if new_test_index doesn't invalidate the incomplete Puzzle:
-            tests_added -= 1;
-
             if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed, &target_index, banned_tests.clone(), used_cards.clone(), &vec_test_couplings, test_pool) {
                 // new_test_index invalidates the puzzle by eliminating too many possible solutions; Redundancy would be required to complete Puzzle with new_test_index added.
                 puzzle.tests.pop();
+                tests_added -= 1;
             } else {
                 // new_test_index doesn't invalidate the incomplete Puzzle; Proceed.
                 for index in vec_test_couplings[new_test_index].iter() {
                     banned_tests.push(*index);
                 }
                 used_cards.push(matrix[target_index].checks[new_test_index].0);
-                tests_added += 1;
             }
         }
     }
