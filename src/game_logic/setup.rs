@@ -549,7 +549,7 @@ pub fn generate_puzzle(
 
         let new_test_index: usize = generate_test_index_from_range(
             &matrix[target_index].checks,
-            test_pool.clone(),
+            test_pool,
             &used_cards,
             &banned_tests,
         );
