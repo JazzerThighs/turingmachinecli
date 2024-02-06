@@ -538,6 +538,8 @@ pub fn generate_puzzle(
 
         if tests_added >= half_tests as usize {
             second_half_of_puzzle = true;
+        } else {
+            second_half_of_puzzle = false;
         }
         let test_pool: RangeInclusive<usize> = set_test_pool_range(
             og_tm_game,
@@ -558,6 +560,8 @@ pub fn generate_puzzle(
 
         if tests_added >= half_tests as usize {
             second_half_of_puzzle = true;
+        } else {
+            second_half_of_puzzle = false;
         }
         let future_test_pool: RangeInclusive<usize> = set_test_pool_range(
             og_tm_game,
