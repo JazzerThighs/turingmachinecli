@@ -4,7 +4,7 @@ use std::{
     collections::HashMap,
     io,
     ops::RangeInclusive,
-    time::{Duration, Instant},
+    // time::{Duration, Instant},
 };
 
 #[derive(Debug)]
@@ -54,7 +54,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
             .read_line(&mut input)
             .expect("Failed to read line");
         match input.trim() {
-            "y" => {
+            "Y" | "y" => {
                 og_tm_game = true;
                 min_digit = '1';
                 max_digit = '5';
@@ -64,7 +64,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
                 break;
             }
             
-            "n" => {
+            "N" | "n" => {
                 og_tm_game = false;
 
                 loop {
@@ -182,7 +182,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
         break;
     }
 
-    let test_amount: u8;
+    let mut test_amount: u8;
     loop {
         let mut input = String::new();
         println!("↓ Please input the number of sections on the machine that are assigned Criteria Verifiers (In the original game, this is from 4 to 6, inclusive)");
@@ -196,6 +196,10 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
                 continue;
             }
         };
+        if test_amount < 1 {
+            println!("Test amount must be a positive integer: \"{}\"", test_amount);
+            continue;
+        }
         break;
     }
 
@@ -413,7 +417,7 @@ fn is_unique_solution(
 
     let mut num_of_solutions: usize = 0;
 
-    for (index, turing_code_result) in matrix.iter().enumerate() {
+    for (_, turing_code_result) in matrix.iter().enumerate() {
         let all_true = puzzle_tests
             .iter()
             .all(|&i| turing_code_result.checks.get(i).map_or(false, |&(_, b)| b));
