@@ -516,6 +516,7 @@ pub fn generate_puzzle(
         _ => (test_amount / 2) + 1,
     };
     let mut second_half_of_puzzle: bool = false;
+    let mut future_second_half_of_puzzle: bool = false;
 
     print!("Generating the puzzle...");
     // let timeout: Duration = Duration::new(2, 500_000_000);
@@ -548,7 +549,59 @@ pub fn generate_puzzle(
             difficulty,
             second_half_of_puzzle,
         );
+        if tests_added + 1 >= half_tests as usize {
+            future_second_half_of_puzzle = true;
+        } else {
+            future_second_half_of_puzzle = false;
+        }
+        let future_test_pool: RangeInclusive<usize> = set_test_pool_range(
+            og_tm_game,
+            last_index,
+            mode,
+            difficulty,
+            future_second_half_of_puzzle,
+        );
 
+        if tests_added + 1 < test_amount as usize {
+            let mut future_check: bool = false;
+            
+            for new_test_index in test_pool.clone() {
+                if matrix[target_index].checks[new_test_index].1 
+                && !banned_tests.contains(&new_test_index)
+                && !used_cards.contains(&matrix[0].checks[new_test_index].0) {
+                    let mut puzzle_tests: Vec<usize> = puzzle.tests.clone();
+                    puzzle_tests.push(new_test_index);
+
+                    if puzzle_building_validation(
+                        &puzzle_tests, 
+                        matrix, 
+                        unique_solutions_needed, 
+                        &target_index, 
+                        banned_tests.clone(), 
+                        used_cards.clone(), 
+                        &vec_test_couplings, 
+                        future_test_pool.clone()
+                    ) {
+                        future_check = true;
+                        break;
+                    }
+                }
+            }
+
+            if !future_check {
+                println!(
+                "Infallible Wall Hit. Resetting puzzle generation...",
+                );
+                
+                tests_added = 0;
+                puzzle.tests.clear();
+                banned_tests = vec_unique_tests.clone();
+                used_cards.clear();
+                
+                continue;
+            }
+        }
+        
         let new_test_index: usize = generate_test_index_from_range(
             &matrix[target_index].checks,
             test_pool,
@@ -558,22 +611,18 @@ pub fn generate_puzzle(
         puzzle.tests.push(new_test_index);
         tests_added += 1;
 
-        if tests_added >= half_tests as usize {
-            second_half_of_puzzle = true;
-        } else {
-            second_half_of_puzzle = false;
-        }
-        let future_test_pool: RangeInclusive<usize> = set_test_pool_range(
-            og_tm_game,
-            last_index,
-            mode,
-            difficulty,
-            second_half_of_puzzle,
-        );
-
         if tests_added == test_amount as usize {
             // The Puzzle is populated, pending a validation check:
-            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed, &target_index, banned_tests.clone(), used_cards.clone(), &vec_test_couplings, future_test_pool) {
+            if !puzzle_building_validation( 
+                &puzzle.tests, 
+                matrix, 
+                unique_solutions_needed, 
+                &target_index, 
+                banned_tests.clone(), 
+                used_cards.clone(), 
+                &vec_test_couplings, 
+                future_test_pool
+            ) {
                 puzzle.tests.pop();
                 tests_added -= 1;
             } else {
@@ -582,7 +631,16 @@ pub fn generate_puzzle(
             }
         } else {
             // The Puzzle still needs more tests added after new_test_index, if new_test_index doesn't invalidate the incomplete Puzzle:
-            if !puzzle_building_validation( &puzzle.tests, matrix, unique_solutions_needed, &target_index, banned_tests.clone(), used_cards.clone(), &vec_test_couplings, future_test_pool) {
+            if !puzzle_building_validation( 
+                &puzzle.tests, 
+                matrix, 
+                unique_solutions_needed, 
+                &target_index, 
+                banned_tests.clone(), 
+                used_cards.clone(), 
+                &vec_test_couplings, 
+                future_test_pool
+            ) {
                 // new_test_index invalidates the puzzle by eliminating too many possible solutions; Redundancy would be required to complete Puzzle with new_test_index added.
                 puzzle.tests.pop();
                 tests_added -= 1;
