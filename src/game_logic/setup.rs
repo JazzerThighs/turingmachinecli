@@ -21,6 +21,12 @@ pub enum Difficulty {
     Hard,
 }
 
+pub struct CriteriaCard {
+    pub card_num: u8,
+    pub description: String,
+    pub tests: Vec<String>,
+}
+
 pub struct TuringCodeEval {
     // Structure to pair every individual Turing Code with an array of booleans as it is put through every Test on every Criteria Card. This is replacing the pre-calculated Punch Cards used for querying the Turing Machine's Verifier Cards.
     pub code: u32,
@@ -267,7 +273,7 @@ pub fn generate_results_matrix(
     if og_tm_game {
         for code in codes.iter() {
             results_matrix.push(
-                og_tm_board_game::criteria_card_tests::evaluate_criteria_results(code.clone()),
+                og_tm_game_variant::criteria_card_tests::evaluate_criteria_results(code.clone()),
             )
         }
     }
@@ -518,22 +524,9 @@ pub fn generate_puzzle(
     let mut second_half_of_puzzle: bool = false;
     let mut future_second_half_of_puzzle: bool = false;
 
-    print!("Generating the puzzle...");
-    // let timeout: Duration = Duration::new(2, 500_000_000);
-    // let mut start_time: Instant = Instant::now();
+    println!("Generating the puzzle...");
 
     loop {
-        // if start_time.elapsed() > timeout {
-        //     println!(
-        //         "Timeout reached. Failed at {} out of {} tests.Resetting puzzle generation...",
-        //         tests_added, test_amount
-        //     );
-        //     tests_added = 0;
-        //     puzzle.tests.clear();
-        //     banned_tests = vec_unique_tests.clone();
-        //     used_cards.clear();
-        //     start_time = Instant::now();
-        // }
 
         let unique_solutions_needed: usize = test_amount as usize - tests_added;
 
@@ -548,7 +541,7 @@ pub fn generate_puzzle(
             mode,
             difficulty,
             second_half_of_puzzle,
-        );
+        ); 
         if tests_added + 1 >= half_tests as usize {
             future_second_half_of_puzzle = true;
         } else {
@@ -563,6 +556,9 @@ pub fn generate_puzzle(
         );
 
         if tests_added + 1 < test_amount as usize {
+            // This future_check 'if' block tests whether or not any of the presently-available paths forward is indeed viable. 
+            //Rather than narrowing down the available options one by one until there are none left, this checks makes sure that at least one such check exists. 
+            //If it does not, then the entire puzzle is reset. This is far easier than walking back the last test that was added, because that would require all of the associated coupled tests and Criteria Card be removed from their respective vectors, and that would be too much to keep track of.
             let mut future_check: bool = false;
             
             for new_test_index in test_pool.clone() {
