@@ -50,7 +50,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
     // If the user sets this bool to 'true' using the "y" match arm, then we can skip inputs for min_digit, max_digit, code_length, min_code, and max_code.
     // Otherwise, we gather that information in the "n" match arm.
     loop {
-        let mut input = String::new();
+        let mut input: String = String::new();
         println!("Are you trying to play a game of the Original \"Turing Machine\" board game?");
         io::stdin()
             .read_line(&mut input)
@@ -70,7 +70,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
                 og_tm_game = false;
 
                 loop {
-                    let mut input = String::new();
+                    let mut input: String = String::new();
 
                     println!(
                         "↓ Please input the smallest digit character (In the original game, this is '1')."
@@ -86,7 +86,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
                         }
                     };
 
-                    let mut input = String::new();
+                    let mut input: String = String::new();
                     
                     println!("↓ Please input the largest digit character (In the original game, this is '5').");
                     io::stdin()
@@ -111,7 +111,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
                 }
 
                 loop {
-                    let mut input = String::new();
+                    let mut input: String = String::new();
                     println!("↓ Please input the number of digits in the valid codes (In the original game, this is 3, resulting in codes ranging from 111 to 555, inclusive).");
                     io::stdin()
                         .read_line(&mut input)
@@ -149,7 +149,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
 
     let mode: Gamemode;
     loop {
-        let mut input = String::new();
+        let mut input: String = String::new();
         println!("↓ Please input the gamemode setting; Your choices are \"Classic Mode\"(c), \"Extreme Mode\"(e), and \"Nightmare Mode\"(n).");
         io::stdin()
             .read_line(&mut input)
@@ -168,7 +168,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
 
     let difficulty: Difficulty;
     loop {
-        let mut input = String::new();
+        let mut input: String = String::new();
         println!("↓ Please input the difficulty setting; Your choices are \"Easy\"(e), \"Standard\"(s), and \"Hard\"(h).");
         io::stdin()
             .read_line(&mut input)
@@ -187,7 +187,7 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
 
     let mut test_amount: u8;
     loop {
-        let mut input = String::new();
+        let mut input: String = String::new();
         println!("↓ Please input the number of sections on the machine that are assigned Criteria Verifiers (In the original game, this is from 4 to 6, inclusive)");
         io::stdin()
             .read_line(&mut input)
