@@ -320,9 +320,8 @@ fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
     return vec_test_couplings;
 }
 
-fn generate_unique_test_list(matrix: &Vec<TuringCodeEval>) -> Vec<usize> {
-    // returns a list of every test from the various Criteria Cards for which only a single Turing Code passes.
-    // The purpose of this is to ensure that no Criteria Test renders any of the other Tests in the Puzzle superfluous.
+fn generate_unique_test_list(matrix: &Vec<TuringCodeEval>, test_amount: &u8) -> Vec<usize> {
+    // returns a list of every test from the various Criteria Cards for which the number of solutions is not high enough to ensure that each does not render any of the other Tests in the Puzzle superfluous.
 
     let mut counts: HashMap<usize, u32> = HashMap::new();
 
@@ -336,7 +335,12 @@ fn generate_unique_test_list(matrix: &Vec<TuringCodeEval>) -> Vec<usize> {
 
     return counts
         .into_iter()
-        .filter_map(|(index, count)| if count == 1 { Some(index) } else { None })
+        .filter_map(|(index, count)|
+            if count < *test_amount as u32 { 
+                Some(index) 
+            } else { 
+                None }
+            )
         .collect();
 }
 
@@ -481,7 +485,7 @@ pub fn generate_puzzle() -> Puzzle {
     );
     let matrix: Vec<TuringCodeEval> = generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
     println!("Matrix generated...");
-    // print_true_instances(&matrix);
+    debug_helpers::print_true_instances(&matrix);
 
     let last_index: usize = matrix[0].checks.len() - 1;
     let last_card: u8 = matrix[0].checks[last_index].0;
@@ -499,18 +503,18 @@ pub fn generate_puzzle() -> Puzzle {
     }
     
     let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(&matrix);
-    let vec_unique_tests: Vec<usize> = generate_unique_test_list(&matrix);
+    let vec_centralized_tests: Vec<usize> = generate_unique_test_list(&matrix, &test_amount);
     
-    for unique_banned_test in vec_unique_tests.iter() {
+    for centralized_banned_test in vec_centralized_tests.iter() {
         println!(
-            "Banned Test for uniqueness: Card {}/{}, Test {}/{};",
-            matrix[0].checks[*unique_banned_test].0,
+            "Banned Test for centralization: Card {}/{}, Test {}/{};",
+            matrix[0].checks[*centralized_banned_test].0,
             matrix[0].checks[last_index].0,
-            &unique_banned_test,
+            &centralized_banned_test,
             &last_index
         );
     }
-    let mut banned_tests: Vec<usize> = vec_unique_tests.clone();
+    let mut banned_tests: Vec<usize> = vec_centralized_tests.clone();
     let mut used_cards: Vec<u8> = vec![];
     let mut tests_added: usize = 0;
     let half_tests: u8 = match test_amount % 2 {
@@ -592,7 +596,7 @@ pub fn generate_puzzle() -> Puzzle {
                 );
                 
                 tests_added = 0;
-                banned_tests = vec_unique_tests.clone();
+                banned_tests = vec_centralized_tests.clone();
                 used_cards.clear();
 
                 (target_code, target_index) = generate_random_puzzle_code(&puzzle.matrix);
