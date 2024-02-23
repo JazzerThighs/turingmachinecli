@@ -21,6 +21,19 @@ pub enum Difficulty {
     Hard,
 }
 
+struct GameParameters {
+    pub og_tm_game: bool,
+    pub min_code: u32,
+    pub max_code: u32,
+    pub min_digit: char,
+    pub max_digit: char,
+    pub mode: Gamemode,
+    pub difficulty: Difficulty,
+    pub sections: u8,
+    pub cards_per_section: u8,
+    pub shuffle: bool,
+}
+
 #[derive(Clone)]
 pub struct TuringCodeEval {
     // Structure to pair every individual Turing Code with an array of booleans as it is put through every Test on every Criteria Card. This is replacing the pre-calculated Punch Cards used for querying the Turing Machine's Verifier Cards.
@@ -36,22 +49,19 @@ pub struct Puzzle {
     pub target_code: u32,
 }
 
-pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8, bool) {
+fn set_game_parameters() -> GameParameters {
     // This entire function allows the user to set all of the parameters of the Puzzle that will be generated to play.
     // At the moment, only Classic Mode, Original-Parameters are supported.
-
+    
+    let mut og_tm_game: bool; // If the user sets this bool to 'true' using the "y" match arm, then we can skip inputs for min_digit, max_digit, code_length, min_code, and max_code. Otherwise, we gather that information in the "n" match arm.
     let mut min_digit: char;
     let mut max_digit: char;
     let mut code_length: u8;
     let mut min_code: u32 = 0;
     let mut max_code: u32 = 0;
-
-    let mut og_tm_game: bool;
-    // If the user sets this bool to 'true' using the "y" match arm, then we can skip inputs for min_digit, max_digit, code_length, min_code, and max_code.
-    // Otherwise, we gather that information in the "n" match arm.
     loop {
         let mut input: String = String::new();
-        println!("Are you trying to play a game of the Original \"Turing Machine\" board game?");
+        println!("Are you trying to play a game of the Original \"Turing Machine\" board game? (y/n)");
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
@@ -60,7 +70,6 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
                 og_tm_game = true;
                 min_digit = '1';
                 max_digit = '5';
-                code_length = 3;
                 min_code = 111;
                 max_code = 555;
                 break;
@@ -155,14 +164,60 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
             .read_line(&mut input)
             .expect("Failed to read line");
         mode = match input.trim() {
-            "c" => Gamemode::Classic,
-            "e" => Gamemode::Extreme,
-            "n" => Gamemode::Nightmare,
+            "c" | "C" => Gamemode::Classic,
+            "e" | "E" => Gamemode::Extreme,
+            "n" | "N" => Gamemode::Nightmare,
             _ => {
                 println!("Invalid mode selection \"{}\"", input.trim());
                 continue;
             }
         };
+        break;
+    }
+
+    let shuffle: bool;
+    loop {
+        shuffle = match mode {
+            Gamemode::Classic | Gamemode::Extreme => {
+                let mut input: String = String::new();
+                println!("↓ Would you like the Test Verifiers to be Shuffled, akin to the Nightmare Mode?");
+                io::stdin()
+                    .read_line(&mut input)
+                    .expect("Failed to read line");
+                match input.trim() {
+                    "y" | "Y" => true,
+                    "n" | "N" => false,
+                    _ => {
+                        println!("Invalid shuffle selection \"{}\"", input.trim());
+                        continue;
+                    },
+                }
+            },
+            Gamemode::Nightmare => true,
+        };
+        break;
+    }
+
+    let cards_per_section: u8;
+    loop {
+        let mut input: String = String::new();
+        println!("↓ Please input the number of Criteria Cards present per section of the machine (In Extreme Mode, it's 2, otherwise it's usually just 1.");
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read line");
+        let parsed_num: f64 = match input.trim().parse() {
+            Ok(num) => num,
+            Err(_) => {
+                println!("Invalid Cards-Per-Test amount \"{}\"", input.trim());
+                continue;
+            }
+        };
+        if !(1.0 <= parsed_num && parsed_num < 256.0) {
+            println!("Ensure that 1 <= Cards-Per-Test < 256  \"{}\"", parsed_num);
+            continue;
+        } else {
+            cards_per_section = parsed_num.floor() as u8;
+        }
         break;
     }
 
@@ -185,37 +240,43 @@ pub fn set_game_parameters() -> (u32, u32, char, char, Gamemode, Difficulty, u8,
         break;
     }
 
-    let mut test_amount: u8;
+    let sections: u8;
     loop {
         let mut input: String = String::new();
-        println!("↓ Please input the number of sections on the machine that are assigned Criteria Verifiers (In the original game, this is from 4 to 6, inclusive)");
+        println!("↓ Please input the number of Sections on the machine that are assigned Criteria Verifiers (In the original game, this is from 4 to 6, inclusive)");
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
-        test_amount = match input.trim().parse() {
+        let parsed_num: f64 = match input.trim().parse() {
             Ok(num) => num,
             Err(_) => {
-                println!("Invalid criteria test amount entered \"{}\"", input.trim());
+                println!("Ensure that 1 <= Section Amount < 256 \"{}\"", input.trim());
                 continue;
             }
         };
-        if test_amount < 1 {
-            println!("Test amount must be a positive integer: \"{}\"", test_amount);
+        if parsed_num < 1.0 || parsed_num % 1.0 != 0.0 || parsed_num > 255.0 {
+            println!("Section Amount must be a positive integer: \"{}\"", parsed_num);
             continue;
+        } else {
+            sections = parsed_num as u8;
         }
         break;
     }
 
-    return (
-        min_code,
-        max_code,
-        min_digit,
-        max_digit,
-        mode,
-        difficulty,
-        test_amount,
-        og_tm_game,
-    );
+    let params: GameParameters = GameParameters {
+        og_tm_game: og_tm_game,
+        min_code: min_code,
+        max_code: max_code,
+        min_digit: min_digit,
+        max_digit: max_digit,
+        mode: mode,
+        difficulty: difficulty,
+        sections: sections,
+        cards_per_section: cards_per_section,
+        shuffle: shuffle
+    };
+
+    return params;
 }
 
 pub fn is_valid_turing_code(
@@ -254,7 +315,7 @@ fn generate_number_pool(
     return number_pool;
 }
 
-pub fn generate_results_matrix(
+fn generate_results_matrix(
     min_code: u32,
     max_code: u32,
     min_digit: char,
@@ -286,7 +347,7 @@ pub fn generate_results_matrix(
     return results_matrix;
 }
 
-pub fn generate_random_puzzle_code(matrix: &Vec<TuringCodeEval>) -> (u32, usize) {
+fn generate_random_puzzle_code(matrix: &Vec<TuringCodeEval>) -> (u32, usize) {
     // returns a random Turing Code from the matrix argument that is the solution to the Puzzle that will be generated.
 
     let mut rng: ThreadRng = rand::thread_rng();
@@ -297,9 +358,7 @@ pub fn generate_random_puzzle_code(matrix: &Vec<TuringCodeEval>) -> (u32, usize)
 }
 
 fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
-    // returns a 2D array of Coupled Tests.
-    // A test is coupled to another test if for every possible Turing Code, the result of Test A matches the result of Test B.
-    // By definition, this renders one of the tests superfluous, and should not be paired with each other in a valid Puzzle.
+    // returns a 2D array of Coupled Tests. A test is coupled to another test if for every possible Turing Code, the result of Test X matches the result of Test Y. By definition, this renders one of the tests superfluous; Test X should not be paired with Test Y in a valid Puzzle, and vice versa.
 
     let mut vec_test_couplings: Vec<Vec<usize>> = vec![Vec::new(); matrix[0].checks.len()];
 
@@ -464,46 +523,30 @@ fn puzzle_building_validation(
 }
 
 pub fn generate_puzzle() -> Puzzle {
-    let (
-        min_code, 
-        max_code, 
-        min_digit, 
-        max_digit, 
-        mode, 
-        difficulty, 
-        test_amount, 
-        og_tm_game
-    ) = set_game_parameters();
+    let params = set_game_parameters();
     println!(
-        "Minimum Code: {}, Maximum Code: {},\nSmallest Digit: {}, Largest Digit: {},\nGamemode: {:?}, Difficulty: {:?}", 
-        min_code, 
-        max_code, 
-        min_digit, 
-        max_digit, 
-        mode, 
-        difficulty
+        "Minimum Code: {}; Maximum Code: {};\nSmallest Digit: {}; Largest Digit: {};\nGamemode: {:?}; Difficulty: {:?};\nNumber of Sections: {}; Shuffled Verifiers?: {};", 
+        params.min_code, 
+        params.max_code, 
+        params.min_digit, 
+        params.max_digit, 
+        params.mode, 
+        params.difficulty,
+        params.sections,
+        params.shuffle
     );
-    let matrix: Vec<TuringCodeEval> = generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
+    let matrix: Vec<TuringCodeEval> = generate_results_matrix(params.min_code, params.max_code, params.min_digit, params.max_digit, params.og_tm_game);
     println!("Matrix generated...");
     debug_helpers::print_true_instances(&matrix);
 
     let last_index: usize = matrix[0].checks.len() - 1;
     let last_card: u8 = matrix[0].checks[last_index].0;
-    match mode {
-        Gamemode::Extreme => {
-            if test_amount > ((last_card / 2) + (last_card % 2)) {
-                panic!("Number of Criteria Cards avaiable exeeds needed number of Criteria Cards assignable to Puzzle");
-            }
-        }
-        _ => {
-            if test_amount > last_card {
-                panic!("Number of Criteria Cards avaiable exeeds needed number of Criteria Cards assignable to Puzzle");
-            }
-        },
+    if params.sections > ((last_card / params.sections) + (last_card % params.sections)) {
+        panic!("Number of Criteria Cards avaiable exeeds needed number of Criteria Cards assignable to Puzzle");
     }
     
     let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(&matrix);
-    let vec_centralized_tests: Vec<usize> = generate_unique_test_list(&matrix, &test_amount);
+    let vec_centralized_tests: Vec<usize> = generate_unique_test_list(&matrix, &params.sections);
     
     for centralized_banned_test in vec_centralized_tests.iter() {
         println!(
@@ -517,9 +560,9 @@ pub fn generate_puzzle() -> Puzzle {
     let mut banned_tests: Vec<usize> = vec_centralized_tests.clone();
     let mut used_cards: Vec<u8> = vec![];
     let mut tests_added: usize = 0;
-    let half_tests: u8 = match test_amount % 2 {
-        0 => test_amount / 2,
-        _ => (test_amount / 2) + 1,
+    let half_tests: u8 = match params.sections % 2 {
+        0 => params.sections / 2,
+        _ => (params.sections / 2) + 1,
     };
     let mut second_half_of_puzzle: bool = false;
     let mut future_second_half_of_puzzle: bool = false;
@@ -534,7 +577,7 @@ pub fn generate_puzzle() -> Puzzle {
     };
 
     loop {
-        let unique_solutions_needed: usize = test_amount as usize - tests_added;
+        let unique_solutions_needed: usize = params.sections as usize - tests_added;
 
         if tests_added >= half_tests as usize {
             second_half_of_puzzle = true;
@@ -542,10 +585,10 @@ pub fn generate_puzzle() -> Puzzle {
             second_half_of_puzzle = false;
         }
         let test_pool: RangeInclusive<usize> = set_test_pool_range(
-            og_tm_game,
+            params.og_tm_game,
             last_index,
-            &mode,
-            &difficulty,
+            &params.mode,
+            &params.difficulty,
             second_half_of_puzzle,
         ); 
         if tests_added + 1 >= half_tests as usize {
@@ -554,14 +597,14 @@ pub fn generate_puzzle() -> Puzzle {
             future_second_half_of_puzzle = false;
         }
         let future_test_pool: RangeInclusive<usize> = set_test_pool_range(
-            og_tm_game,
+            params.og_tm_game,
             last_index,
-            &mode,
-            &difficulty,
+            &params.mode,
+            &params.difficulty,
             future_second_half_of_puzzle,
         );
 
-        if tests_added + 1 < test_amount as usize {
+        if tests_added + 1 < params.sections as usize {
             // This future_check 'if' block tests whether or not any of the presently-available paths forward is indeed viable. 
             // Rather than narrowing down the available options one by one until there are none left, this checks makes sure that at least one such check exists. 
             // If it does not, then the entire puzzle is reset. This is far easier than walking back the last test that was added, because that would require all of the associated coupled tests and Criteria Card be removed from their respective vectors, and that would be too much to keep track of.
@@ -616,7 +659,7 @@ pub fn generate_puzzle() -> Puzzle {
         puzzle.tests.push(new_test_index);
         tests_added += 1;
 
-        if tests_added == test_amount as usize {
+        if tests_added == params.sections as usize {
             // The Puzzle is populated, pending a validation check:
             if !puzzle_building_validation( 
                 &puzzle.tests, 
