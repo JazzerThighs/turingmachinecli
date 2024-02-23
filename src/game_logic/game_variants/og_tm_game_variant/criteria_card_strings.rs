@@ -304,7 +304,8 @@ pub fn criteria_card_strings() -> Vec<CriteriaCard> {
         38,
         "the sum of two specific colors is equal to 6",
         "Blue + Yellow == 6;",
-        "Blue + Purple == 6;"
+        "Blue + Purple == 6;",
+        "Yellow + Purple == 6;"
     );
     add_criteria_card!(
         vec_criteria_cards,

@@ -1,96 +1,83 @@
 use crate::game_logic::setup::TuringCodeEval;
 
 pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
-    let mut num = turing_code.clone();
-    let purple = &num % 10;
+    let mut num: u32 = turing_code.clone();
+    let purple: u32 = &num % 10;
     num /= 10;
-    let yellow = &num % 10;
+    let yellow: u32 = &num % 10;
     num /= 10;
-    let blue = num;
+    let blue: u32 = num;
 
-    // Criteria Card 1,
-    // Criteria Card 2,
-    // Criteria Card 3,
-    // Criteria Card 4,
-    // Criteria Card 26,
-    // Criteria Card 27,
-    // Criteria Card 28,
-    // Criteria Card 29,
-    // Criteria Card 30,
-    // Criteria Card 31,
-    // Criteria Card 32,
-    // Criteria Card 39,
-    // Criteria Card 40,
-    // Criteria Card 41
-    let mut test1_1 = false;
-    let mut test1_2 = false;
-
-    let mut test2_1 = false;
-    let mut test2_2 = false;
-    let mut test2_3 = false;
-
-    let mut test3_1 = false;
-    let mut test3_2 = false;
-    let mut test3_3 = false;
-
-    let mut test4_1 = false;
-    let mut test4_2 = false;
-    let mut test4_3 = false;
-
-    let mut test26_1 = false;
-    let mut test26_2 = false;
-    let mut test26_3 = false;
-
-    let mut test27_1 = false;
-    let mut test27_2 = false;
-    let mut test27_3 = false;
-
-    let mut test28_1 = false;
-    let mut test28_2 = false;
-    let mut test28_3 = false;
-
-    let mut test29_1 = false;
-    let mut test29_2 = false;
-    let mut test29_3 = false;
-
-    let mut test30_1 = false;
-    let mut test30_2 = false;
-    let mut test30_3 = false;
-
-    let mut test31_1 = false;
-    let mut test31_2 = false;
-    let mut test31_3 = false;
-
-    let mut test32_1 = false;
-    let mut test32_2 = false;
-    let mut test32_3 = false;
-
-    let mut test39_1 = false;
-    let mut test39_2 = false;
-    let mut test39_3 = false;
-    let mut test39_4 = false;
-    let mut test39_5 = false;
-    let mut test39_6 = false;
-
-    let mut test40_1 = false;
-    let mut test40_2 = false;
-    let mut test40_3 = false;
-    let mut test40_4 = false;
-    let mut test40_5 = false;
-    let mut test40_6 = false;
-    let mut test40_7 = false;
-    let mut test40_8 = false;
-    let mut test40_9 = false;
-
-    let mut test41_1 = false;
-    let mut test41_2 = false;
-    let mut test41_3 = false;
-    let mut test41_4 = false;
-    let mut test41_5 = false;
-    let mut test41_6 = false;
-    let mut test41_7 = false;
-    let mut test41_8 = false;
-    let mut test41_9 = false;
+    // Criteria Card 1, "the Blue number compared to 1"
+    let mut test1_1: bool = false; // Blue == 1
+    let mut test1_2: bool = false; // Blue > 1
+    // Criteria Card 2, "the Blue number compared to 3"
+    let mut test2_1: bool = false; // Blue < 3
+    let mut test2_2: bool = false; // Blue == 3
+    let mut test2_3: bool = false; // Blue > 3
+    // Criteria Card 3, "the Yellow number compared to 3"
+    let mut test3_1: bool = false; // Yellow < 3
+    let mut test3_2: bool = false; // Yellow == 3
+    let mut test3_3: bool = false; // Yellow > 3
+    // Criteria Card 4, "the Yellow number compared to 4"
+    let mut test4_1: bool = false; // Yellow < 4
+    let mut test4_2: bool = false; // Yellow == 4
+    let mut test4_3: bool = false; // Yellow > 4
+    // Criteria Card 26, "that a specific color is less than 3"
+    let mut test26_1: bool = false; // Blue < 3
+    let mut test26_2: bool = false; // Yellow < 3
+    let mut test26_3: bool = false; // Purple < 3
+    // Criteria Card 27, "that a specific color is less than 4"
+    let mut test27_1: bool = false; // Blue < 4
+    let mut test27_2: bool = false; // Yellow < 4
+    let mut test27_3: bool = false; // Purple < 4
+    // Criteria Card 28, "that a specific color is equal to 1"
+    let mut test28_1: bool = false; // Blue == 1
+    let mut test28_2: bool = false; // Yellow == 1
+    let mut test28_3: bool = false; // Purple == 1
+    // Criteria Card 29, "that a specific color is equal to 3"
+    let mut test29_1: bool = false; // Blue == 3
+    let mut test29_2: bool = false; // Yellow == 3
+    let mut test29_3: bool = false; // Purple == 3
+    // Criteria Card 30, "that a specific color is equal to 4"
+    let mut test30_1: bool = false; // Blue == 4
+    let mut test30_2: bool = false; // Purple == 4
+    let mut test30_3: bool = false; // Yellow == 4
+    // Criteria Card 31, "that a specific color is greater than 1"
+    let mut test31_1: bool = false; // Blue > 1
+    let mut test31_2: bool = false; // Yellow > 1
+    let mut test31_3: bool = false; // Purple > 1
+    // Criteria Card 32, "that a specific color is greater than 3"
+    let mut test32_1: bool = false; // Blue > 3
+    let mut test32_2: bool = false; // Yellow > 3
+    let mut test32_3: bool = false; // Purple > 3
+    // Criteria Card 39, "the number of one specific color compared to 1"
+    let mut test39_1: bool = false; // Blue == 1
+    let mut test39_2: bool = false; // Blue > 1
+    let mut test39_3: bool = false; // Yellow == 1
+    let mut test39_4: bool = false; // Yellow > 1
+    let mut test39_5: bool = false; // Purple == 1
+    let mut test39_6: bool = false; // Purple > 1
+    // Criteria Card 40, "the number of one specific color compared to 3"
+    let mut test40_1: bool = false; // Blue < 3
+    let mut test40_2: bool = false; // Blue == 3
+    let mut test40_3: bool = false; // Blue > 3
+    let mut test40_4: bool = false; // Yellow < 3
+    let mut test40_5: bool = false; // Yellow == 3
+    let mut test40_6: bool = false; // Yellow > 3
+    let mut test40_7: bool = false; // Purple < 3
+    let mut test40_8: bool = false; // Purple == 3
+    let mut test40_9: bool = false; // Purple > 3
+    // Criteria Card 41, "the number of one specific color compared to 4"
+    let mut test41_1: bool = false; // Blue < 4
+    let mut test41_2: bool = false; // Blue == 4
+    let mut test41_3: bool = false; // Blue > 4
+    let mut test41_4: bool = false; // Yellow < 4
+    let mut test41_5: bool = false; // Yellow == 4
+    let mut test41_6: bool = false; // Yellow > 4
+    let mut test41_7: bool = false; // Purple < 4
+    let mut test41_8: bool = false; // Purple == 4
+    let mut test41_9: bool = false; // Purple > 4
 
     if blue == 1 {
         test1_1 = true;
@@ -190,25 +177,22 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         test41_9 = true;
     }
 
-    // Criteria Card 5,
-    // Criteria Card 6,
-    // Criteria Card 7,
-    // Criteria Card 33
-    let mut test5_1 = false;
-    let mut test5_2 = false;
-
-    let mut test6_1 = false;
-    let mut test6_2 = false;
-
-    let mut test7_1 = false;
-    let mut test7_2 = false;
-
-    let mut test33_1 = false;
-    let mut test33_2 = false;
-    let mut test33_3 = false;
-    let mut test33_4 = false;
-    let mut test33_5 = false;
-    let mut test33_6 = false;
+    // Criteria Card 5, "if Blue is even or odd"
+    let mut test5_1: bool = false; // Blue is even
+    let mut test5_2: bool = false; // Blue is odd
+    // Criteria Card 6, "if Yellow is even or odd"
+    let mut test6_1: bool = false; // Yellow is even
+    let mut test6_2: bool = false; // Yellow is odd
+    // Criteria Card 7, "if Purple is even or odd"
+    let mut test7_1: bool = false; // Purple is even
+    let mut test7_2: bool = false; // Purple is odd
+    // Criteria Card 33, "that a specific color is even or odd"
+    let mut test33_1: bool = false; // Blue is even
+    let mut test33_2: bool = false; // Blue is odd
+    let mut test33_3: bool = false; // Yellow is even
+    let mut test33_4: bool = false; // Yellow is odd
+    let mut test33_5: bool = false; // Purple is even
+    let mut test33_6: bool = false; // Purple is odd
 
     if blue % 2 == 0 {
         test5_1 = true;
@@ -234,51 +218,47 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         test33_6 = true;
     }
 
-    // Criteria Card 8,
-    // Criteria Card 9,
-    // Criteria Card 10,
-    // Criteria Card 45,
-    // Criteria Card 46,
-    // Criteria Card 47
-    let mut test8_1 = false;
-    let mut test8_2 = false;
-    let mut test8_3 = false;
-    let mut test8_4 = false;
+    // Criteria Card 8, "the number of 1's in the code"
+    let mut test8_1: bool = false; // zero 1's
+    let mut test8_2: bool = false; // one 1
+    let mut test8_3: bool = false; // two 1's
+    let mut test8_4: bool = false; // three 1's
+    // Criteria Card 9, "the number of 3's in the code"
+    let mut test9_1: bool = false; // zero 3's
+    let mut test9_2: bool = false; // one 3
+    let mut test9_3: bool = false; // two 3's
+    let mut test9_4: bool = false; // three 3's
+    // Criteria Card 10, "the number of 4's in the code"
+    let mut test10_1: bool = false; // zero 4's
+    let mut test10_2: bool = false; // one 4
+    let mut test10_3: bool = false; // two 4's
+    let mut test10_4: bool = false; // three 4's
+    // Criteria Card 45, "how many 1's or how many 3's there are in the code"
+    let mut test45_1: bool = false; // zero 1's
+    let mut test45_2: bool = false; // zero 3's
+    let mut test45_3: bool = false; // one 1
+    let mut test45_4: bool = false; // one 3
+    let mut test45_5: bool = false; // two 1's
+    let mut test45_6: bool = false; // two 3's
+    // Criteria Card 46, "how many 3's or how many 4's there are in the code"
+    let mut test46_1: bool = false; // zero 3's
+    let mut test46_2: bool = false; // zero 4's
+    let mut test46_3: bool = false; // one 3
+    let mut test46_4: bool = false; // one 4
+    let mut test46_5: bool = false; // two 3's
+    let mut test46_6: bool = false; // two 4's
+    // Criteria Card 47, "how many 1's or how many 4's there are in the code",
+    let mut test47_1: bool = false; // zero 1's
+    let mut test47_2: bool = false; // zero 4's
+    let mut test47_3: bool = false; // one 1
+    let mut test47_4: bool = false; // one 4
+    let mut test47_5: bool = false; // two 1's
+    let mut test47_6: bool = false; // two 4's
 
-    let mut test9_1 = false;
-    let mut test9_2 = false;
-    let mut test9_3 = false;
-    let mut test9_4 = false;
-
-    let mut test10_1 = false;
-    let mut test10_2 = false;
-    let mut test10_3 = false;
-    let mut test10_4 = false;
-
-    let mut test45_1 = false;
-    let mut test45_2 = false;
-    let mut test45_3 = false;
-    let mut test45_4 = false;
-    let mut test45_5 = false;
-    let mut test45_6 = false;
-
-    let mut test46_1 = false;
-    let mut test46_2 = false;
-    let mut test46_3 = false;
-    let mut test46_4 = false;
-    let mut test46_5 = false;
-    let mut test46_6 = false;
-
-    let mut test47_1 = false;
-    let mut test47_2 = false;
-    let mut test47_3 = false;
-    let mut test47_4 = false;
-    let mut test47_5 = false;
-    let mut test47_6 = false;
-
-    let mut num_of_1s = 0;
-    let mut num_of_3s = 0;
-    let mut num_of_4s = 0;
+    let mut num_of_1s: u8 = 0;
+    let mut num_of_3s: u8 = 0;
+    let mut num_of_4s: u8 = 0;
+    
     if blue == 1 {
         num_of_1s += 1;
     } else if blue == 3 {
@@ -286,6 +266,7 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
     } else if blue == 4 {
         num_of_4s += 1;
     }
+    
     if yellow == 1 {
         num_of_1s += 1;
     } else if yellow == 3 {
@@ -293,6 +274,7 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
     } else if yellow == 4 {
         num_of_4s += 1;
     }
+    
     if purple == 1 {
         num_of_1s += 1;
     } else if purple == 3 {
@@ -361,47 +343,42 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         _ => {}
     }
 
-    // Criteria Card 11,
-    // Criteria Card 12,
-    // Criteria Card 13,
-    // Criteria Card 43,
-    // Criteria Card 44,
-    // Criteria Card 48
-    let mut test11_1 = false;
-    let mut test11_2 = false;
-    let mut test11_3 = false;
-
-    let mut test12_1 = false;
-    let mut test12_2 = false;
-    let mut test12_3 = false;
-
-    let mut test13_1 = false;
-    let mut test13_2 = false;
-    let mut test13_3 = false;
-
-    let mut test43_1 = false;
-    let mut test43_2 = false;
-    let mut test43_3 = false;
-    let mut test43_4 = false;
-    let mut test43_5 = false;
-    let mut test43_6 = false;
-
-    let mut test44_1 = false;
-    let mut test44_2 = false;
-    let mut test44_3 = false;
-    let mut test44_4 = false;
-    let mut test44_5 = false;
-    let mut test44_6 = false;
-
-    let mut test48_1 = false;
-    let mut test48_2 = false;
-    let mut test48_3 = false;
-    let mut test48_4 = false;
-    let mut test48_5 = false;
-    let mut test48_6 = false;
-    let mut test48_7 = false;
-    let mut test48_8 = false;
-    let mut test48_9 = false;
+    // Criteria Card 11, "the Blue number compared to the Yellow number"
+    let mut test11_1: bool = false; // Blue < Yellow
+    let mut test11_2: bool = false; // Blue == Yellow
+    let mut test11_3: bool = false; // Blue > Yellow
+    // Criteria Card 12, "the Blue number compared to the Purple number"
+    let mut test12_1: bool = false; // Blue < Purple
+    let mut test12_2: bool = false; // Blue == Purple
+    let mut test12_3: bool = false; // Blue > Purple
+    // Criteria Card 13, "the Yellow number compared to the Purple number"
+    let mut test13_1: bool = false; // Yellow < Purple
+    let mut test13_2: bool = false; // Yellow == Purple
+    let mut test13_3: bool = false; // Yellow > Purple
+    // Criteria Card 43, "the Blue number compared to the number of another specific color"
+    let mut test43_1: bool = false; // Blue < Yellow
+    let mut test43_2: bool = false; // Blue < Purple
+    let mut test43_3: bool = false; // Blue == Yellow
+    let mut test43_4: bool = false; // Blue == Purple
+    let mut test43_5: bool = false; // Blue > Yellow
+    let mut test43_6: bool = false; // Blue > Purple
+    // Criteria Card 44, "the Yellow number compared to the number of another specific color"
+    let mut test44_1: bool = false; // Yellow < Blue
+    let mut test44_2: bool = false; // Yellow < Purple
+    let mut test44_3: bool = false; // Yellow == Blue
+    let mut test44_4: bool = false; // Yellow == Purple
+    let mut test44_5: bool = false; // Yellow > Blue
+    let mut test44_6: bool = false; // Yellow > Purple
+    // Criteria Card 48, "one specific color compared to another specific color"
+    let mut test48_1: bool = false; // Blue < Yellow
+    let mut test48_2: bool = false; // Blue == Yellow
+    let mut test48_3: bool = false; // Blue > Yellow
+    let mut test48_4: bool = false; // Blue < Purple
+    let mut test48_5: bool = false; // Blue == Purple
+    let mut test48_6: bool = false; // Blue > Purple
+    let mut test48_7: bool = false; // Yellow < Purple
+    let mut test48_8: bool = false; // Yellow == Purple
+    let mut test48_9: bool = false; // Yellow > Purple
 
     if blue < yellow {
         test11_1 = true;
@@ -448,10 +425,10 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         test48_9 = true;
     }
 
-    // Criteria Card 14
-    let mut test14_1 = false;
-    let mut test14_2 = false;
-    let mut test14_3 = false;
+    // Criteria Card 14, "which color's number is smaller than either of the others"
+    let mut test14_1: bool = false; // Blue < Yellow && Blue < Purple
+    let mut test14_2: bool = false; // Yellow < Blue && Yellow < Purple
+    let mut test14_3: bool = false; // Purple < Blue && Purple < Yellow
 
     if (blue < yellow) && (blue < purple) {
         test14_1 = true;
@@ -463,10 +440,10 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         test14_3 = true;
     }
 
-    // Criteria Card 15
-    let mut test15_1 = false;
-    let mut test15_2 = false;
-    let mut test15_3 = false;
+    // Criteria Card 15, "which color's number is larger than either of the others"
+    let mut test15_1: bool = false; // Blue > Yellow && Blue > Purple
+    let mut test15_2: bool = false; // Yellow > Blue && Yellow > Purple
+    let mut test15_3: bool = false; // Purple > Blue && Purple > Yellow
 
     if (blue > yellow) && (blue > purple) {
         test15_1 = true;
@@ -478,15 +455,14 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         test15_3 = true;
     }
 
-    // Criteria Card 16,
-    // Criteria Card 17
-    let mut test16_1 = false;
-    let mut test16_2 = false;
-
-    let mut test17_1 = false;
-    let mut test17_2 = false;
-    let mut test17_3 = false;
-    let mut test17_4 = false;
+    // Criteria Card 16, "the number of even numbers compared to the number of odd numbers"
+    let mut test16_1: bool = false; // even > odd
+    let mut test16_2: bool = false; // even < odd
+    // Criteria Card 17, "how many even numbers there are in the code"
+    let mut test17_1: bool = false; // zero even numbers
+    let mut test17_2: bool = false; // one even number
+    let mut test17_3: bool = false; // two even numbers
+    let mut test17_4: bool = false; // three even numbers
 
     let mut even_count = 0;
     if blue % 2 == 0 {
@@ -519,19 +495,17 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         _ => {}
     }
 
-    // Criteria Card 18,
-    // Criteria Card 23,
-    // Criteria Card 36
-    let mut test18_1 = false;
-    let mut test18_2 = false;
-
-    let mut test23_1 = false;
-    let mut test23_2 = false;
-    let mut test23_3 = false;
-
-    let mut test36_1 = false;
-    let mut test36_2 = false;
-    let mut test36_3 = false;
+    // Criteria Card 18, "if the sum of all the numbers is even or odd"
+    let mut test18_1: bool = false; // Blue + Yellow + Purple == even
+    let mut test18_2: bool = false; // Blue + Yellow + Purple == odd
+    // Criteria Card 23, "the sum of all numbers compared to 6"
+    let mut test23_1: bool = false; // Blue + Yellow + Purple < 6
+    let mut test23_2: bool = false; // Blue + Yellow + Purple == 6
+    let mut test23_3: bool = false; // Blue + Yellow + Purple < 6
+    // Criteria Card 36, "the sum of all the numbers is a multiple of 3 or 4 or 5"
+    let mut test36_1: bool = false; // Blue + Yellow + Purple % 3 == 0
+    let mut test36_2: bool = false; // Blue + Yellow + Purple % 4 == 0
+    let mut test36_3: bool = false; // Blue + Yellow + Purple % 5 == 0
 
     let all_color_sum = blue + yellow + purple;
 
@@ -543,10 +517,12 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
 
     if all_color_sum % 3 == 0 {
         test36_1 = true;
-    }
+    }    
+    
     if all_color_sum % 4 == 0 {
         test36_2 = true;
     }
+    
     if all_color_sum % 5 == 0 {
         test36_3 = true;
     }
@@ -559,24 +535,23 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         test23_3 = true;
     }
 
-    // Criteria Card 19,
-    // Criteria Card 37,
-    // Criteria Card 38
-    let mut test19_1 = false;
-    let mut test19_2 = false;
-    let mut test19_3 = false;
-
-    let mut test37_1 = false;
-    let mut test37_2 = false;
-    let mut test37_3 = false;
-
-    let mut test38_1 = false;
-    let mut test38_2 = false;
-    let mut test38_3 = false;
+    // Criteria Card 19, "the sum of Blue and Yellow compared to 6"
+    let mut test19_1: bool = false; // Blue + Yellow < 6
+    let mut test19_2: bool = false; // Blue + Yellow == 6
+    let mut test19_3: bool = false; // Blue + Yellow > 6
+    // Criteria Card 37, "the sum of two specific colors is equal to 4"
+    let mut test37_1: bool = false; // Blue + Yellow == 4
+    let mut test37_2: bool = false; // Blue + Purple == 4
+    let mut test37_3: bool = false; // Yellow + Purple == 4
+   // Criteria Card 38, "the sum of two specific colors is equal to 6"
+    let mut test38_1: bool = false; // Blue + Yellow == 6
+    let mut test38_2: bool = false; // Blue + Purple == 6
+    let mut test38_3: bool = false; // Yellow + Purple == 6
 
     if (blue + yellow) == 4 {
         test37_1 = true;
     }
+    
     if (blue + yellow) < 6 {
         test19_1 = true;
     } else if (blue + yellow) == 6 {
@@ -598,22 +573,24 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         test38_3 = true;
     }
 
-    // Criteria Card 20,
-    // Criteria Card 21
-    let mut test20_1 = false;
-    let mut test20_2 = false;
-    let mut test20_3 = false;
+    // Criteria Card 20, "if a number repeats itself in the code"
+    let mut test20_1: bool = false; // a triple number
+    let mut test20_2: bool = false; // a double number
+    let mut test20_3: bool = false; // no repetition
+    // Criteria Card 21, "if there is a number present exactly twice"
+    let mut test21_1: bool = false; // no pairs || three of a kind
+    let mut test21_2: bool = false; // a pair
 
-    let mut test21_1 = false;
-    let mut test21_2 = false;
-
-    let mut num_repetitions = 0;
+    let mut num_repetitions: u8 = 0;
+    
     if blue == yellow {
         num_repetitions += 1;
     }
+    
     if blue == purple {
         num_repetitions += 1;
     }
+    
     if yellow == purple{
         num_repetitions += 1;
     }
@@ -633,10 +610,10 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         }
     }
 
-    // Criteria Card 22
-    let mut test22_1 = false;
-    let mut test22_2 = false;
-    let mut test22_3 = false;
+    // Criteria Card 22, "if the three numbers in the code are in ascending order, descending order, or no order"
+    let mut test22_1: bool = false; // ascending order
+    let mut test22_2: bool = false; // descending order
+    let mut test22_3: bool = false; // no order
 
     if (blue < yellow) && (yellow < purple) {
         test22_1 = true;
@@ -646,18 +623,21 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         test22_3 = true;
     }
 
-    // Criteria Card 24
-    let mut test24_1 = false;
-    let mut test24_2 = false;
-    let mut test24_3 = false;
-    let mut test24_count = 0;
+    // Criteria Card 24, "if there is a sequence of ascending numbers"
+    let mut test24_1: bool = false; // three numbers in ascending order
+    let mut test24_2: bool = false; // two numbers in ascending order
+    let mut test24_3: bool = false; // no numbers in ascending order
+    
+    let mut test24_count: u8 = 0;
 
     if (blue + 1) == yellow {
         test24_count += 1;
     }
+    
     if (yellow + 1) == purple {
         test24_count += 1;
     }
+    
     match test24_count {
         2 => test24_1 = true,
         1 => test24_2 = true,
@@ -665,25 +645,30 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         _ => {}
     }
 
-    // Criteria Card 25
-    let mut test25_1 = false;
-    let mut test25_2 = false;
-    let mut test25_3 = false;
+    // Criteria Card 25, "if there is a sequence of ascending or descending numbers"
+    let mut test25_1: bool = false; // three numbers in ascending or descending order
+    let mut test25_2: bool = false; // two numbers in ascending or descending order
+    let mut test25_3: bool = false; // no numbers in ascending or descending order
+    
     let mut test25_ascend_count: u8 = 0;
     let mut test25_descend_count: u8 = 0;
 
     if (blue + 1) == yellow {
         test25_ascend_count += 1;
     }
+    
     if (blue - 1) == yellow {
         test25_descend_count += 1;
     }
+    
     if (yellow + 1) == purple {
         test25_ascend_count += 1;
     }
+    
     if (yellow - 1) == purple {
         test25_descend_count += 1;
     }
+    
     match (test25_ascend_count, test25_descend_count) {
         (2, _) | (_, 2) => test25_3 = true,
         (1, _) | (_, 1) => test25_2 = true,
@@ -691,43 +676,47 @@ pub fn evaluate_criteria_results(turing_code: u32) -> TuringCodeEval {
         _ => {},
     }
 
-    // Criteria Card 34
-    let mut test34_1 = false;
-    let mut test34_2 = false;
-    let mut test34_3 = false;
+    // Criteria Card 34, "which color has the smallest number (or is tied for the smallest number)"
+    let mut test34_1: bool = false; // Blue <= Yellow && Blue <= Purple
+    let mut test34_2: bool = false; // Yellow <= Blue && Yellow <= Purple
+    let mut test34_3: bool = false; // Purple <= Blue && Purple <= Yellow
 
     if (blue <= yellow) && (blue <= purple) {
         test34_1 = true;
     }
+    
     if (yellow <= blue) && (yellow <= purple) {
         test34_2 = true;
     }
+    
     if (purple <= blue) && (purple <= yellow) {
         test34_3 = true;
     }
 
-    // Criteria Card 35
-    let mut test35_1 = false;
-    let mut test35_2 = false;
-    let mut test35_3 = false;
+    // Criteria Card 35, "which color has the largest number (or is tied for the largest number)"
+    let mut test35_1: bool = false; // Blue >= Yellow && Blue >= Purple
+    let mut test35_2: bool = false; // Yellow >= Blue && Yellow >= Purple
+    let mut test35_3: bool = false; // Purple >= Blue && Purple >= Yellow
 
     if (blue >= yellow) && (blue >= purple) {
         test35_1 = true;
     }
+    
     if (yellow >= blue) && (yellow >= purple) {
         test35_2 = true;
     }
+    
     if (purple >= blue) && (purple >= yellow) {
         test35_3 = true;
     }
 
-    // Criteria Card 42
-    let mut test42_1 = false;
-    let mut test42_2 = false;
-    let mut test42_3 = false;
-    let mut test42_4 = false;
-    let mut test42_5 = false;
-    let mut test42_6 = false;
+    // Criteria Card 42, "which color is the smallest or the largest"
+    let mut test42_1: bool = false; // Blue < Yellow && Blue < Purple
+    let mut test42_2: bool = false; // Blue > Yellow && Blue > Purple
+    let mut test42_3: bool = false; // Yellow < Blue && Yellow < Purple
+    let mut test42_4: bool = false; // Yellow > Blue && Yellow > Purple
+    let mut test42_5: bool = false; // Purple < Blue && Purple < Yellow
+    let mut test42_6: bool = false; // Purple > Blue && Purple > Yellow
 
     if (blue < yellow) && (blue < purple) {
         test42_1 = true;
