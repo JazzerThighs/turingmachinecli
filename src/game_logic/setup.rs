@@ -525,7 +525,7 @@ fn puzzle_building_validation(
 pub fn generate_puzzle() -> Puzzle {
     let params = set_game_parameters();
     println!(
-        "Minimum Code: {}; Maximum Code: {};\nSmallest Digit: {}; Largest Digit: {};\nGamemode: {:?}; Difficulty: {:?};\nNumber of Sections: {}; Shuffled Verifiers?: {};", 
+        "Minimum Code: {}; Maximum Code: {};\nSmallest Digit: {}; Largest Digit: {};\nGamemode: {:?}; Difficulty: {:?};\nNumber of Sections: {}; Criteria Cards Per Section: {};\nShuffled Verifiers?: {};", 
         params.min_code, 
         params.max_code, 
         params.min_digit, 
@@ -533,6 +533,7 @@ pub fn generate_puzzle() -> Puzzle {
         params.mode, 
         params.difficulty,
         params.sections,
+        params.cards_per_section,
         params.shuffle
     );
     let matrix: Vec<TuringCodeEval> = generate_results_matrix(params.min_code, params.max_code, params.min_digit, params.max_digit, params.og_tm_game);
