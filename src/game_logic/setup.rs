@@ -315,7 +315,7 @@ fn generate_number_pool(
     return number_pool;
 }
 
-fn generate_results_matrix(
+pub fn generate_results_matrix(
     min_code: u32,
     max_code: u32,
     min_digit: char,
@@ -357,7 +357,7 @@ fn generate_random_puzzle_code(matrix: &Vec<TuringCodeEval>) -> (u32, usize) {
     return (target_code, target_index);
 }
 
-fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
+pub fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
     // returns a 2D array of Coupled Tests. A test is coupled to another test if for every possible Turing Code, the result of Test X matches the result of Test Y. By definition, this renders one of the tests superfluous; Test X should not be paired with Test Y in a valid Puzzle, and vice versa.
 
     let mut vec_test_couplings: Vec<Vec<usize>> = vec![Vec::new(); matrix[0].checks.len()];
@@ -379,7 +379,7 @@ fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
     return vec_test_couplings;
 }
 
-fn generate_unique_test_list(matrix: &Vec<TuringCodeEval>, test_amount: &u8) -> Vec<usize> {
+pub fn generate_centralizing_test_list(matrix: &Vec<TuringCodeEval>, test_amount: &u8) -> Vec<usize> {
     // returns a list of every test from the various Criteria Cards for which the number of solutions is not high enough to ensure that each does not render any of the other Tests in the Puzzle superfluous.
 
     let mut counts: HashMap<usize, u32> = HashMap::new();
@@ -479,7 +479,7 @@ fn puzzle_building_validation(
     vec_test_couplings: &Vec<Vec<usize>>,
     test_pool: RangeInclusive<usize>
 ) -> bool {
-    // returns true if puzzle_tests argument is a unique set of true booleans among all of the codes.
+    // returns true if puzzle_tests argument is validly diverse/unique enough for the current state of the puzzle.
 
     let mut num_of_solutions: usize = 0;
 
@@ -547,7 +547,7 @@ pub fn generate_puzzle() -> Puzzle {
     }
     
     let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(&matrix);
-    let vec_centralized_tests: Vec<usize> = generate_unique_test_list(&matrix, &params.sections);
+    let vec_centralized_tests: Vec<usize> = generate_centralizing_test_list(&matrix, &params.sections);
     
     for centralized_banned_test in vec_centralized_tests.iter() {
         println!(
