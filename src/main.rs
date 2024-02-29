@@ -20,8 +20,8 @@ fn main() {
     let test_amount: u8 = 4;
     let vec_centralized_tests: Vec<usize> = setup::generate_centralizing_test_list(&matrix, &test_amount);
     matrix.clone().into_par_iter().for_each(|tce| {
-        
-        
+        let mut data: Vec<Vec<usize>> = vec![];
+
         for a in 0..=46 {
             if vec_centralized_tests.contains(&a) { continue; }
 
@@ -40,20 +40,32 @@ fn main() {
                         
                         let puzzle_tests: Vec<usize> = vec![a, b, c, d];
                         let mut valid_puzzle: bool = true;
-                        for (index, tcr) in matrix.iter().enumerate() {
+                        for (index, t) in matrix.iter().enumerate() {
                             let all_true = puzzle_tests.iter()
-                                .all(|&i| tcr.checks.get(i).map_or(false, |&(_, b)| b));
+                                .all(|&i| t.checks.get(i).map_or(false, |&(_, b)| b));
                             if all_true && index != tce.code as usize { valid_puzzle = false; }
                         }
                         if !valid_puzzle { continue; }
-                        let uc_d: Vec<u8> = vec![uc_c.clone(), vec![tce.checks[d].0]].concat();
-                        let xt_d: Vec<usize> = vec![xt_c.clone(), vec_test_couplings[d].clone()].concat();
 
+                        data.push(vec![a, b, c, d]);
+                        println!("OG/Cl/Ea/4 ++: {tce:?}->{a:>3}|{b:>3}|{c:>3}|{d:>3}")
                     }
                 }
             }
         }
-
+        
+        let mut json_data: serde_json::Map<String, Value> = serde_json::Map::new();
+        for (index, vec) in data.iter().enumerate() {
+            let formatted_string = vec.iter()
+                .map(usize::to_string)
+                .collect::<Vec<String>>()
+                .join("|");
+            json_data.insert(index.to_string(), Value::String(formatted_string));
+        }
+        let tcestr: String = format!("puzzle_db/og_tm_game/classic/easy/four_sections/{}_solutions.json", tce.code.to_string());
+        let json_path: &Path = Path::new(tcestr.as_str());
+        let mut file: File = File::create(&json_path).expect("Failed to create file");
+        file.write_all(serde_json::to_string(&json_data).ok().unwrap().as_bytes()).expect("Failed to write to file");
     });
 
 
@@ -62,7 +74,8 @@ fn main() {
     // let test_amount: u8 = 4;
     // let vec_centralized_tests: Vec<usize> = setup::generate_centralizing_test_list(&matrix, &test_amount);
     // matrix.clone().into_par_iter().for_each(|tce| {
-    
+    //     let json_path: &Path = Path::new(format!("puzzle_db/og_tm_game/classic/easy/five_sections/{}_solutions.json", tce.code.to_string()).as_str());
+
     //     for a in 0..=45 {
     //         if vec_centralized_tests.contains(&a) { continue; }
 
@@ -110,6 +123,7 @@ fn main() {
     // let test_amount: u8 = 4;
     // let vec_centralized_tests: Vec<usize> = setup::generate_centralizing_test_list(&matrix, &test_amount);
     // matrix.clone().into_par_iter().for_each(|tce| {
+    //     let json_path: &Path = Path::new(format!("puzzle_db/og_tm_game/classic/easy/six_sections/{}_solutions.json", tce.code.to_string()).as_str());
         
     //     for a in 0..=44 {
     //         if vec_centralized_tests.contains(&a) { continue; }

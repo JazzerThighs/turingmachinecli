@@ -34,7 +34,7 @@ struct GameParameters {
     pub shuffle: bool,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TuringCodeEval {
     // Structure to pair every individual Turing Code with an array of booleans as it is put through every Test on every Criteria Card. This is replacing the pre-calculated Punch Cards used for querying the Turing Machine's Verifier Cards.
     pub checks: Vec<(u8, bool)>, // Vec<(criteria_card_number, pass_or_fail)>
