@@ -1,6 +1,5 @@
 mod game_logic;
 use crate::game_logic::*;
-use rayon::prelude::*;
 use serde_json::Value;
 use std::{
     fs::File,
@@ -46,7 +45,8 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
         .clone()
         .into_iter()
         .for_each(|tce: setup::TuringCodeEval| {
-            let mut data: Vec<Vec<usize>> = vec![];
+            let mut data: Vec<[usize; 4]> = vec![];
+            let mut valid_puzzle: bool = true;
 
             for a in 0..=upper_bound - 3 {
                 if !tce.checks[a].1 || vec_centralized_tests.contains(&a) {
@@ -61,54 +61,54 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
                     {
                         continue;
                     }
-                    let uc_b: Vec<u8> = vec![tce.checks[a].0, tce.checks[b].0];
-                    let xt_b: Vec<usize> =
-                        vec![vec_test_couplings[a].clone(), vec_test_couplings[b].clone()].concat();
 
                     for c in half_start..=upper_bound - 1 {
-                        if c <= a
-                            || c <= b
+                        if a >= c
+                            || b >= c
                             || !tce.checks[c].1
                             || vec_centralized_tests.contains(&c)
-                            || uc_b.contains(&tce.checks[c].0)
-                            || xt_b.contains(&c)
+                            || tce.checks[a].0 == tce.checks[c].0
+                            || tce.checks[b].0 == tce.checks[c].0
+                            || vec_test_couplings[a].contains(&c)
+                            || vec_test_couplings[b].contains(&c)
                         {
                             continue;
                         }
-                        let uc_c: Vec<u8> = vec![uc_b.clone(), vec![tce.checks[c].0]].concat();
-                        let xt_c: Vec<usize> =
-                            vec![xt_b.clone(), vec_test_couplings[c].clone()].concat();
 
                         for d in c + 1..=upper_bound {
                             if !tce.checks[d].1
                                 || vec_centralized_tests.contains(&d)
-                                || uc_c.contains(&tce.checks[d].0)
-                                || xt_c.contains(&d)
+                                || tce.checks[a].0 == tce.checks[d].0
+                                || tce.checks[b].0 == tce.checks[d].0
+                                || tce.checks[c].0 == tce.checks[d].0
+                                || vec_test_couplings[a].contains(&d)
+                                || vec_test_couplings[b].contains(&d)
+                                || vec_test_couplings[c].contains(&d)
                             {
                                 continue;
                             }
 
-                            let puzzle_tests: Vec<usize> = vec![a, b, c, d];
-                            let mut valid_puzzle: bool = true;
+                            valid_puzzle = true;
                             for (_, t) in matrix.iter().enumerate() {
-                                let all_true = puzzle_tests
+                                let all_true = [a, b, c, d]
                                     .iter()
                                     .all(|&i| t.checks.get(i).map_or(false, |&(_, b)| b));
                                 if all_true && t.code != tce.code {
                                     valid_puzzle = false;
+                                    break;
                                 }
                             }
                             if !valid_puzzle {
                                 continue;
                             }
 
-                            data.push(puzzle_tests);
-                            puzzle_4_count.fetch_add(1, Ordering::Relaxed);
+                            data.push([a, b, c, d]);
                         }
                     }
                 }
             }
-
+            
+            puzzle_4_count.fetch_add(data.len(), Ordering::Relaxed);
             let mut json_data: serde_json::Map<String, Value> = serde_json::Map::new();
             for (index, vec) in data.iter().enumerate() {
                 let formatted_string = vec
@@ -141,7 +141,8 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
         setup::generate_centralizing_test_list(&matrix, &test_amount);
     let puzzle_5_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     matrix.clone().into_iter().for_each(|tce| {
-        let mut data: Vec<Vec<usize>> = vec![];
+        let mut data: Vec<[usize; 5]> = vec![];
+        let mut valid_puzzle: bool = true;
 
         for a in 0..=upper_bound - 4 {
             if !tce.checks[a].1 || vec_centralized_tests.contains(&a) {
@@ -156,66 +157,71 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
                 {
                     continue;
                 }
-                let uc_b: Vec<u8> = vec![tce.checks[a].0, tce.checks[b].0];
-                let xt_b: Vec<usize> =
-                    vec![vec_test_couplings[a].clone(), vec_test_couplings[b].clone()].concat();
 
                 for c in half_start..=upper_bound - 2 {
-                    if c <= a
-                        || c <= b
+                    if a >= c
+                        || b >= c
                         || !tce.checks[c].1
                         || vec_centralized_tests.contains(&c)
-                        || uc_b.contains(&tce.checks[c].0)
-                        || xt_b.contains(&c)
+                        || tce.checks[a].0 == tce.checks[c].0
+                        || tce.checks[b].0 == tce.checks[c].0
+                        || vec_test_couplings[a].contains(&c)
+                        || vec_test_couplings[b].contains(&c)
+                        
                     {
                         continue;
                     }
-                    let uc_c: Vec<u8> = vec![uc_b.clone(), vec![tce.checks[c].0]].concat();
-                    let xt_c: Vec<usize> =
-                        vec![xt_b.clone(), vec_test_couplings[c].clone()].concat();
 
                     for d in c + 1..=upper_bound - 1 {
                         if !tce.checks[d].1
                             || vec_centralized_tests.contains(&d)
-                            || uc_c.contains(&tce.checks[d].0)
-                            || xt_c.contains(&d)
+                            || tce.checks[a].0 == tce.checks[d].0
+                            || tce.checks[b].0 == tce.checks[d].0
+                            || tce.checks[c].0 == tce.checks[d].0
+                            || vec_test_couplings[a].contains(&d)
+                            || vec_test_couplings[b].contains(&d)
+                            || vec_test_couplings[c].contains(&d)
                         {
                             continue;
                         }
-                        let uc_d: Vec<u8> = vec![uc_c.clone(), vec![tce.checks[d].0]].concat();
-                        let xt_d: Vec<usize> =
-                            vec![xt_c.clone(), vec_test_couplings[d].clone()].concat();
 
                         for e in d + 1..=upper_bound {
                             if !tce.checks[e].1
                                 || vec_centralized_tests.contains(&e)
-                                || uc_d.contains(&tce.checks[e].0)
-                                || xt_d.contains(&e)
+                                || tce.checks[a].0 == tce.checks[e].0
+                                || tce.checks[b].0 == tce.checks[e].0
+                                || tce.checks[c].0 == tce.checks[e].0
+                                || tce.checks[d].0 == tce.checks[e].0
+                                || vec_test_couplings[a].contains(&e)
+                                || vec_test_couplings[b].contains(&e)
+                                || vec_test_couplings[c].contains(&e)
+                                || vec_test_couplings[d].contains(&e)
                             {
                                 continue;
                             }
 
-                            let puzzle_tests: Vec<usize> = vec![a, b, c, d, e];
-                            let mut valid_puzzle: bool = true;
+                            valid_puzzle = true;
                             for (_, t) in matrix.iter().enumerate() {
-                                let all_true = puzzle_tests
+                                let all_true = [a, b, c, d, e]
                                     .iter()
                                     .all(|&i| t.checks.get(i).map_or(false, |&(_, b)| b));
                                 if all_true && t.code != tce.code {
                                     valid_puzzle = false;
+                                    break;
                                 }
                             }
                             if !valid_puzzle {
                                 continue;
                             }
-                            data.push(puzzle_tests);
-                            puzzle_5_count.fetch_add(1, Ordering::Relaxed);
+                            
+                            data.push([a, b, c, d, e]);
                         }
                     }
                 }
             }
         }
-
+        
+        puzzle_5_count.fetch_add(data.len(), Ordering::Relaxed);
         let mut json_data: serde_json::Map<String, Value> = serde_json::Map::new();
         for (index, vec) in data.iter().enumerate() {
             let formatted_string = vec
@@ -242,14 +248,14 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
 
     // ****************************************************************************************************************************************************************************************
 
-    // Classic Mode | Easy | Six Sections
+    // Six Sections
     let test_amount: u8 = 6;
     let vec_centralized_tests: Vec<usize> =
         setup::generate_centralizing_test_list(&matrix, &test_amount);
     let puzzle_6_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     matrix.clone().into_iter().for_each(|tce| {
-        // using into_par_iter() made my PC chug and the process failed.
-        let mut data: Vec<Vec<usize>> = vec![];
+        let mut data: Vec<[usize; 6]> = vec![];
+        let mut valid_puzzle: bool = true;
 
         for a in 0..=upper_bound - 5 {
             if !tce.checks[a].1 || vec_centralized_tests.contains(&a) {
@@ -264,80 +270,89 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
                 {
                     continue;
                 }
-                let uc_b: Vec<u8> = vec![tce.checks[a].0, tce.checks[b].0];
-                let xt_b: Vec<usize> =
-                    vec![vec_test_couplings[a].clone(), vec_test_couplings[b].clone()].concat();
 
                 for c in b + 1..=upper_bound - 3 {
                     if !tce.checks[c].1
                         || vec_centralized_tests.contains(&c)
-                        || uc_b.contains(&tce.checks[c].0)
-                        || xt_b.contains(&c)
+                        || tce.checks[a].0 == tce.checks[c].0
+                        || tce.checks[b].0 == tce.checks[c].0
+                        || vec_test_couplings[a].contains(&c)
+                        || vec_test_couplings[b].contains(&c)
                     {
                         continue;
                     }
-                    let uc_c: Vec<u8> = vec![uc_b.clone(), vec![tce.checks[c].0]].concat();
-                    let xt_c: Vec<usize> =
-                        vec![xt_b.clone(), vec_test_couplings[c].clone()].concat();
 
                     for d in half_start..=upper_bound - 2 {
-                        if d <= a
-                            || d <= b
-                            || d <= c
+                        if a >= d
+                            || b >= d
+                            || c >= d
                             || !tce.checks[d].1
                             || vec_centralized_tests.contains(&d)
-                            || uc_c.contains(&tce.checks[d].0)
-                            || xt_c.contains(&d)
+                            || tce.checks[a].0 == tce.checks[d].0
+                            || tce.checks[b].0 == tce.checks[d].0
+                            || tce.checks[c].0 == tce.checks[d].0
+                            || vec_test_couplings[a].contains(&d)
+                            || vec_test_couplings[b].contains(&d)
+                            || vec_test_couplings[c].contains(&d)
                         {
                             continue;
                         }
-                        let uc_d: Vec<u8> = vec![uc_c.clone(), vec![tce.checks[d].0]].concat();
-                        let xt_d: Vec<usize> =
-                            vec![xt_c.clone(), vec_test_couplings[d].clone()].concat();
 
                         for e in d + 1..=upper_bound - 1 {
                             if !tce.checks[e].1
                                 || vec_centralized_tests.contains(&e)
-                                || uc_d.contains(&tce.checks[e].0)
-                                || xt_d.contains(&e)
+                                || tce.checks[a].0 == tce.checks[e].0
+                                || tce.checks[b].0 == tce.checks[e].0
+                                || tce.checks[c].0 == tce.checks[e].0
+                                || tce.checks[d].0 == tce.checks[e].0
+                                || vec_test_couplings[a].contains(&e)
+                                || vec_test_couplings[b].contains(&e)
+                                || vec_test_couplings[c].contains(&e)
+                                || vec_test_couplings[d].contains(&e)
                             {
                                 continue;
                             }
-                            let uc_e: Vec<u8> = vec![uc_d.clone(), vec![tce.checks[e].0]].concat();
-                            let xt_e: Vec<usize> =
-                                vec![xt_d.clone(), vec_test_couplings[e].clone()].concat();
 
                             for f in e + 1..=upper_bound {
                                 if !tce.checks[f].1
                                     || vec_centralized_tests.contains(&f)
-                                    || uc_e.contains(&tce.checks[f].0)
-                                    || xt_e.contains(&f)
+                                    || tce.checks[a].0 == tce.checks[f].0
+                                    || tce.checks[b].0 == tce.checks[f].0
+                                    || tce.checks[c].0 == tce.checks[f].0
+                                    || tce.checks[d].0 == tce.checks[f].0
+                                    || tce.checks[e].0 == tce.checks[f].0
+                                    || vec_test_couplings[a].contains(&f)
+                                    || vec_test_couplings[b].contains(&f)
+                                    || vec_test_couplings[c].contains(&f)
+                                    || vec_test_couplings[d].contains(&f)
+                                    || vec_test_couplings[e].contains(&f)
                                 {
                                     continue;
                                 }
 
-                                let puzzle_tests: Vec<usize> = vec![a, b, c, d, e, f];
-                                let mut valid_puzzle: bool = true;
+                                valid_puzzle = true;
                                 for (_, t) in matrix.iter().enumerate() {
-                                    let all_true = puzzle_tests
+                                    let all_true = [a, b, c, d, e, f]
                                         .iter()
                                         .all(|&i| t.checks.get(i).map_or(false, |&(_, b)| b));
                                     if all_true && t.code != tce.code {
                                         valid_puzzle = false;
+                                        break;
                                     }
                                 }
                                 if !valid_puzzle {
                                     continue;
                                 }
-                                data.push(puzzle_tests);
-                                puzzle_6_count.fetch_add(1, Ordering::Relaxed);
+                                
+                                data.push([a, b, c, d, e, f]);
                             }
                         }
                     }
                 }
             }
         }
-
+        
+        puzzle_6_count.fetch_add(data.len(), Ordering::Relaxed);
         let mut json_data: serde_json::Map<String, Value> = serde_json::Map::new();
         for (index, vec) in data.iter().enumerate() {
             let formatted_string = vec
