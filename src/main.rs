@@ -45,7 +45,7 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
         .clone()
         .into_iter()
         .for_each(|tce: setup::TuringCodeEval| {
-            let mut data: Vec<[usize; 4]> = vec![];
+            let mut data: Vec<[u8; 4]> = vec![];
             let mut valid_puzzle: bool = true;
 
             for a in 0..=upper_bound - 3 {
@@ -102,18 +102,18 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
                                 continue;
                             }
 
-                            data.push([a, b, c, d]);
+                            data.push([a as u8, b as u8, c as u8, d as u8]);
                         }
                     }
                 }
             }
-            
+
             puzzle_4_count.fetch_add(data.len(), Ordering::Relaxed);
             let mut json_data: serde_json::Map<String, Value> = serde_json::Map::new();
             for (index, vec) in data.iter().enumerate() {
                 let formatted_string = vec
                     .iter()
-                    .map(usize::to_string)
+                    .map(u8::to_string)
                     .collect::<Vec<String>>()
                     .join("|");
                 json_data.insert(index.to_string(), Value::String(formatted_string));
@@ -129,7 +129,7 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
             print!("({mode}|{diff}|4: {} Done)", tce.code);
         });
     println!(
-        "{mode}|{diff}|4: {:>9}",
+        "\n{mode}|{diff}|4: {:>9}",
         puzzle_4_count.load(Ordering::Relaxed)
     );
 
@@ -141,7 +141,7 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
         setup::generate_centralizing_test_list(&matrix, &test_amount);
     let puzzle_5_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     matrix.clone().into_iter().for_each(|tce| {
-        let mut data: Vec<[usize; 5]> = vec![];
+        let mut data: Vec<[u8; 5]> = vec![];
         let mut valid_puzzle: bool = true;
 
         for a in 0..=upper_bound - 4 {
@@ -167,7 +167,6 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
                         || tce.checks[b].0 == tce.checks[c].0
                         || vec_test_couplings[a].contains(&c)
                         || vec_test_couplings[b].contains(&c)
-                        
                     {
                         continue;
                     }
@@ -213,20 +212,20 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
                             if !valid_puzzle {
                                 continue;
                             }
-                            
-                            data.push([a, b, c, d, e]);
+
+                            data.push([a as u8, b as u8, c as u8, d as u8, e as u8]);
                         }
                     }
                 }
             }
         }
-        
+
         puzzle_5_count.fetch_add(data.len(), Ordering::Relaxed);
         let mut json_data: serde_json::Map<String, Value> = serde_json::Map::new();
         for (index, vec) in data.iter().enumerate() {
             let formatted_string = vec
                 .iter()
-                .map(usize::to_string)
+                .map(u8::to_string)
                 .collect::<Vec<String>>()
                 .join("|");
             json_data.insert(index.to_string(), Value::String(formatted_string));
@@ -242,7 +241,7 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
         print!("({mode}|{diff}|5: {} Done)", tce.code);
     });
     println!(
-        "{mode}|{diff}|5: {:>9}",
+        "\n{mode}|{diff}|5: {:>9}",
         puzzle_5_count.load(Ordering::Relaxed)
     );
 
@@ -254,7 +253,7 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
         setup::generate_centralizing_test_list(&matrix, &test_amount);
     let puzzle_6_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     matrix.clone().into_iter().for_each(|tce| {
-        let mut data: Vec<[usize; 6]> = vec![];
+        let mut data: Vec<[u8; 6]> = vec![];
         let mut valid_puzzle: bool = true;
 
         for a in 0..=upper_bound - 5 {
@@ -343,21 +342,21 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
                                 if !valid_puzzle {
                                     continue;
                                 }
-                                
-                                data.push([a, b, c, d, e, f]);
+
+                                data.push([a as u8, b as u8, c as u8, d as u8, e as u8, f as u8]);
                             }
                         }
                     }
                 }
             }
         }
-        
+
         puzzle_6_count.fetch_add(data.len(), Ordering::Relaxed);
         let mut json_data: serde_json::Map<String, Value> = serde_json::Map::new();
         for (index, vec) in data.iter().enumerate() {
             let formatted_string = vec
                 .iter()
-                .map(usize::to_string)
+                .map(u8::to_string)
                 .collect::<Vec<String>>()
                 .join("|");
             json_data.insert(index.to_string(), Value::String(formatted_string));
@@ -373,7 +372,7 @@ fn generate_og_tm_puzzle_db(half_start: usize, upper_bound: usize, mode: &str, d
         print!("({mode}|{diff}|6: {} Done)", tce.code);
     });
     println!(
-        "{mode}|{diff}|6: {:>9}",
+        "\n{mode}|{diff}|6: {:>9}",
         puzzle_6_count.load(Ordering::Relaxed)
     );
     println!(
