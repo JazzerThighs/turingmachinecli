@@ -422,7 +422,7 @@ fn set_test_pool_range(
                 (Gamemode::Extreme, Difficulty::Standard) => 29..=71,
                 (Gamemode::Extreme, Difficulty::Hard) => 63..=last_index,
                 (Gamemode::Nightmare, Difficulty::Easy) => 29..=49,
-                (Gamemode::Nightmare, Difficulty::Standard) => 18..=62,
+                (Gamemode::Nightmare, Difficulty::Standard) => 17..=62,
                 (Gamemode::Nightmare, Difficulty::Hard) => 66..=last_index,
             }
         } else {
