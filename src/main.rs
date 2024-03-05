@@ -27,7 +27,7 @@ fn generate_og_tm_puzzle_db() {
 
     (0..=179)
         .into_par_iter()
-        .filter(|num| !vct_4.contains(num))
+        .filter(|num: &usize| !vct_4.contains(num))
         .for_each(|a: usize| {
 
         for b in a + 1..=180 {
