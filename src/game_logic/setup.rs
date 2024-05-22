@@ -76,10 +76,8 @@ pub fn generate_results_matrix(
     return results_matrix;
 }
 
-pub fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
+pub fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>, bool_slices: &mut [[bool; 183]; 183]) {
     // returns a 2D array of Coupled Tests. A test is coupled to another test if for every possible Turing Code, the result of Test X matches the result of Test Y. By definition, this renders one of the tests superfluous; Test X should not be paired with Test Y in a valid Puzzle, and vice versa.
-
-    let mut vec_test_couplings: Vec<Vec<usize>> = vec![Vec::new(); matrix[0].checks.len()];
 
     let is_coupled = |x: usize, y: usize| -> bool {
         matrix
@@ -87,15 +85,15 @@ pub fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>
             .all(|turing_result| turing_result.checks[x].1 == turing_result.checks[y].1)
     };
 
-    for x in 0..matrix[0].checks.len() {
-        for y in 0..matrix[0].checks.len() {
-            if x != y && is_coupled(x, y) {
-                vec_test_couplings[x].push(y);
+    for x in 0..(matrix[0].checks.len() - 1) {
+        for y in (x + 1)..matrix[0].checks.len() {
+            if is_coupled(x, y) {
+                bool_slices[x][y] = true;
             }
         }
     }
 
-    return vec_test_couplings;
+    return;
 }
 
 pub fn generate_centralizing_test_list(matrix: &Vec<TuringCodeEval>, test_amount: &u8) -> Vec<usize> {

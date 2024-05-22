@@ -1,9 +1,12 @@
 mod game_logic;
 use crate::game_logic::*;
 use rayon::prelude::*;
-use std::sync::{
-    atomic::{AtomicUsize, Ordering},
-    Arc,
+use std::{
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+    time::{Duration, Instant},
 };
 
 fn main() {
@@ -17,12 +20,14 @@ fn generate_og_tm_puzzle_db() {
     println!("Generating Matrix...");
     let matrix: Vec<setup::TuringCodeEval> =
         setup::generate_results_matrix(111, 555, '1', '5', true);
-    println!("Generating Vector of Test Couplings...");
-    let couplings: Vec<Vec<usize>> = setup::generate_coupled_criteria(&matrix);
+    println!("Generating Matrix of Test Couplings...");
+    let mut couplings: [[bool; 183]; 183] = [[false; 183]; 183];
+    setup::generate_coupled_criteria(&matrix, &mut couplings);
+    let couplings: [[bool; 183]; 183] = couplings;
     println!("Generating 4-Puzzle, 5-Puzzle, and 6-Puzzle Centralizing Tests...");
-    let mut vct_4: Vec<usize> = vec![];
-    let mut vct_5: Vec<usize> = vec![];
-    let mut vct_6: Vec<usize> = vec![];
+    let mut vct_4: [bool; 183] = [false; 183];
+    let mut vct_5: [bool; 183] = [false; 183];
+    let mut vct_6: [bool; 183] = [false; 183];
     for x in 0..matrix[0].checks.len() {
         let mut count: u8 = 0;
         for y in 0..matrix.len() {
@@ -31,28 +36,27 @@ fn generate_og_tm_puzzle_db() {
             }
         }
         if count < 4 {
-            vct_4.push(x);
+            vct_4[x] = true;
         }
         if count < 5 {
-            vct_5.push(x);
+            vct_5[x] = true;
         }
         if count < 6 {
-            vct_6.push(x);
+            vct_6[x] = true;
         }
     }
     let puzzle_4_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let puzzle_5_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let puzzle_6_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
 
+    let p4_start: Instant = Instant::now();
+
     (0..matrix[0].checks.len() - 3)
         .into_par_iter()
-        .filter(|a: &usize| !vct_4.contains(a))
+        .filter(|a: &usize| vct_4[*a] == false)
         .for_each(|a: usize| {
             for b in a + 1..matrix[0].checks.len() - 2 {
-                if vct_4.contains(&b)
-                    || matrix[0].checks[a].0 == matrix[0].checks[b].0
-                    || couplings[a].contains(&b)
-                {
+                if vct_4[b] || matrix[0].checks[a].0 == matrix[0].checks[b].0 || couplings[a][b] {
                     continue;
                 }
 
@@ -72,11 +76,11 @@ fn generate_og_tm_puzzle_db() {
                 }
 
                 for c in b + 1..matrix[0].checks.len() - 1 {
-                    if vct_4.contains(&c)
+                    if vct_4[c]
                         || matrix[0].checks[a].0 == matrix[0].checks[c].0
                         || matrix[0].checks[b].0 == matrix[0].checks[c].0
-                        || couplings[a].contains(&c)
-                        || couplings[b].contains(&c)
+                        || couplings[a][c]
+                        || couplings[b][c]
                     {
                         continue;
                     }
@@ -97,13 +101,13 @@ fn generate_og_tm_puzzle_db() {
                     }
 
                     for d in c + 1..matrix[0].checks.len() {
-                        if vct_4.contains(&d)
+                        if vct_4[d]
                             || matrix[0].checks[a].0 == matrix[0].checks[d].0
                             || matrix[0].checks[b].0 == matrix[0].checks[d].0
                             || matrix[0].checks[c].0 == matrix[0].checks[d].0
-                            || couplings[a].contains(&d)
-                            || couplings[b].contains(&d)
-                            || couplings[c].contains(&d)
+                            || couplings[a][d]
+                            || couplings[b][d]
+                            || couplings[c][d]
                         {
                             continue;
                         }
@@ -130,20 +134,22 @@ fn generate_og_tm_puzzle_db() {
                 }
             }
         });
+
+    let p4_duration: Duration = p4_start.elapsed();
+    println!("Duration of p4 calculation: {p4_duration:?}");
     println!(
         "Total # of Puzzles with 4 Criteria Cards: {:>9}",
         puzzle_4_count.load(Ordering::Relaxed)
     );
 
+    let p5_start: Instant = Instant::now();
+
     (0..matrix[0].checks.len() - 4)
         .into_par_iter()
-        .filter(|a: &usize| !vct_5.contains(a))
+        .filter(|a: &usize| vct_5[*a] == false)
         .for_each(|a: usize| {
             for b in a + 1..matrix[0].checks.len() - 3 {
-                if vct_5.contains(&b)
-                    || matrix[0].checks[a].0 == matrix[0].checks[b].0
-                    || couplings[a].contains(&b)
-                {
+                if vct_5[b] || matrix[0].checks[a].0 == matrix[0].checks[b].0 || couplings[a][b] {
                     continue;
                 }
 
@@ -163,11 +169,11 @@ fn generate_og_tm_puzzle_db() {
                 }
 
                 for c in b + 1..matrix[0].checks.len() - 2 {
-                    if vct_5.contains(&c)
+                    if vct_5[c]
                         || matrix[0].checks[a].0 == matrix[0].checks[c].0
                         || matrix[0].checks[b].0 == matrix[0].checks[c].0
-                        || couplings[a].contains(&c)
-                        || couplings[b].contains(&c)
+                        || couplings[a][c]
+                        || couplings[b][c]
                     {
                         continue;
                     }
@@ -188,13 +194,13 @@ fn generate_og_tm_puzzle_db() {
                     }
 
                     for d in c + 1..matrix[0].checks.len() - 1 {
-                        if vct_5.contains(&d)
+                        if vct_5[d]
                             || matrix[0].checks[a].0 == matrix[0].checks[d].0
                             || matrix[0].checks[b].0 == matrix[0].checks[d].0
                             || matrix[0].checks[c].0 == matrix[0].checks[d].0
-                            || couplings[a].contains(&d)
-                            || couplings[b].contains(&d)
-                            || couplings[c].contains(&d)
+                            || couplings[a][d]
+                            || couplings[b][d]
+                            || couplings[c][d]
                         {
                             continue;
                         }
@@ -219,15 +225,15 @@ fn generate_og_tm_puzzle_db() {
                         }
 
                         for e in d + 1..matrix[0].checks.len() {
-                            if vct_5.contains(&e)
+                            if vct_5[e]
                                 || matrix[0].checks[a].0 == matrix[0].checks[e].0
                                 || matrix[0].checks[b].0 == matrix[0].checks[e].0
                                 || matrix[0].checks[c].0 == matrix[0].checks[e].0
                                 || matrix[0].checks[d].0 == matrix[0].checks[e].0
-                                || couplings[a].contains(&e)
-                                || couplings[b].contains(&e)
-                                || couplings[c].contains(&e)
-                                || couplings[d].contains(&e)
+                                || couplings[a][e]
+                                || couplings[b][e]
+                                || couplings[c][e]
+                                || couplings[d][e]
                             {
                                 continue;
                             }
@@ -256,20 +262,22 @@ fn generate_og_tm_puzzle_db() {
                 }
             }
         });
+
+    let p5_duration: Duration = p5_start.elapsed();
+    println!("Duration of p5 calculation: {p5_duration:?}");
     println!(
         "Total # of Puzzles with 5 Criteria Cards: {:>9}",
         puzzle_5_count.load(Ordering::Relaxed)
     );
 
+    let p6_start: Instant = Instant::now();
+
     (0..matrix[0].checks.len() - 5)
         .into_par_iter()
-        .filter(|a: &usize| !vct_6.contains(a))
+        .filter(|a: &usize| vct_6[*a] == false)
         .for_each(|a: usize| {
             for b in a + 1..matrix[0].checks.len() - 4 {
-                if vct_6.contains(&b)
-                    || matrix[0].checks[a].0 == matrix[0].checks[b].0
-                    || couplings[a].contains(&b)
-                {
+                if vct_6[b] || matrix[0].checks[a].0 == matrix[0].checks[b].0 || couplings[a][b] {
                     continue;
                 }
 
@@ -289,11 +297,11 @@ fn generate_og_tm_puzzle_db() {
                 }
 
                 for c in b + 1..matrix[0].checks.len() - 3 {
-                    if vct_6.contains(&c)
+                    if vct_6[c]
                         || matrix[0].checks[a].0 == matrix[0].checks[c].0
                         || matrix[0].checks[b].0 == matrix[0].checks[c].0
-                        || couplings[a].contains(&c)
-                        || couplings[b].contains(&c)
+                        || couplings[a][c]
+                        || couplings[b][c]
                     {
                         continue;
                     }
@@ -314,13 +322,13 @@ fn generate_og_tm_puzzle_db() {
                     }
 
                     for d in c + 1..matrix[0].checks.len() - 2 {
-                        if vct_6.contains(&d)
+                        if vct_6[d]
                             || matrix[0].checks[a].0 == matrix[0].checks[d].0
                             || matrix[0].checks[b].0 == matrix[0].checks[d].0
                             || matrix[0].checks[c].0 == matrix[0].checks[d].0
-                            || couplings[a].contains(&d)
-                            || couplings[b].contains(&d)
-                            || couplings[c].contains(&d)
+                            || couplings[a][d]
+                            || couplings[b][d]
+                            || couplings[c][d]
                         {
                             continue;
                         }
@@ -345,15 +353,15 @@ fn generate_og_tm_puzzle_db() {
                         }
 
                         for e in d + 1..matrix[0].checks.len() - 1 {
-                            if vct_6.contains(&e)
+                            if vct_6[e]
                                 || matrix[0].checks[a].0 == matrix[0].checks[e].0
                                 || matrix[0].checks[b].0 == matrix[0].checks[e].0
                                 || matrix[0].checks[c].0 == matrix[0].checks[e].0
                                 || matrix[0].checks[d].0 == matrix[0].checks[e].0
-                                || couplings[a].contains(&e)
-                                || couplings[b].contains(&e)
-                                || couplings[c].contains(&e)
-                                || couplings[d].contains(&e)
+                                || couplings[a][e]
+                                || couplings[b][e]
+                                || couplings[c][e]
+                                || couplings[d][e]
                             {
                                 continue;
                             }
@@ -379,17 +387,17 @@ fn generate_og_tm_puzzle_db() {
                             }
 
                             for f in e + 1..matrix[0].checks.len() {
-                                if vct_6.contains(&f)
+                                if vct_6[f]
                                     || matrix[0].checks[a].0 == matrix[0].checks[f].0
                                     || matrix[0].checks[b].0 == matrix[0].checks[f].0
                                     || matrix[0].checks[c].0 == matrix[0].checks[f].0
                                     || matrix[0].checks[d].0 == matrix[0].checks[f].0
                                     || matrix[0].checks[e].0 == matrix[0].checks[f].0
-                                    || couplings[a].contains(&f)
-                                    || couplings[b].contains(&f)
-                                    || couplings[c].contains(&f)
-                                    || couplings[d].contains(&f)
-                                    || couplings[e].contains(&f)
+                                    || couplings[a][f]
+                                    || couplings[b][f]
+                                    || couplings[c][f]
+                                    || couplings[d][f]
+                                    || couplings[e][f]
                                 {
                                     continue;
                                 }
@@ -420,6 +428,9 @@ fn generate_og_tm_puzzle_db() {
                 }
             }
         });
+
+    let p6_duration: Duration = p6_start.elapsed();
+    println!("Duration of p6 calculation: {p6_duration:?}");
     println!(
         "Total # of Puzzles with 6 Criteria Cards: {:>9}",
         puzzle_6_count.load(Ordering::Relaxed)
