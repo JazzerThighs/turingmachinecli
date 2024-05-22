@@ -1,10 +1,10 @@
 mod game_logic;
 use crate::game_logic::*;
 use rayon::prelude::*;
-use std::sync::{
+use std::{time::{Instant, Duration}, sync::{
     atomic::{AtomicUsize, Ordering},
     Arc,
-};
+}};
 
 fn main() {
     println!("~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~\nWelcome to the Turing Machine CLI!\n\nThis program is a personal project based off of the board game called \"Turing Machine\" designed by Fabien Gridel & Yoann Levet.\n~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~\n");
@@ -43,6 +43,8 @@ fn generate_og_tm_puzzle_db() {
     let puzzle_4_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let puzzle_5_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let puzzle_6_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
+
+    let p4_start: Instant = Instant::now();
 
     (0..matrix[0].checks.len() - 3)
         .into_par_iter()
@@ -130,10 +132,15 @@ fn generate_og_tm_puzzle_db() {
                 }
             }
         });
+
+    let p4_duration: Duration = p4_start.elapsed();
+    println!("Duration of p4 calculation: {p4_duration:?}");
     println!(
         "Total # of Puzzles with 4 Criteria Cards: {:>9}",
         puzzle_4_count.load(Ordering::Relaxed)
     );
+
+    let p5_start: Instant = Instant::now();
 
     (0..matrix[0].checks.len() - 4)
         .into_par_iter()
@@ -256,10 +263,15 @@ fn generate_og_tm_puzzle_db() {
                 }
             }
         });
+
+    let p5_duration: Duration = p5_start.elapsed();
+    println!("Duration of p5 calculation: {p5_duration:?}");
     println!(
         "Total # of Puzzles with 5 Criteria Cards: {:>9}",
         puzzle_5_count.load(Ordering::Relaxed)
     );
+
+    let p6_start: Instant = Instant::now();
 
     (0..matrix[0].checks.len() - 5)
         .into_par_iter()
@@ -420,6 +432,9 @@ fn generate_og_tm_puzzle_db() {
                 }
             }
         });
+
+    let p6_duration: Duration = p6_start.elapsed();
+    println!("Duration of p6 calculation: {p6_duration:?}");
     println!(
         "Total # of Puzzles with 6 Criteria Cards: {:>9}",
         puzzle_6_count.load(Ordering::Relaxed)
