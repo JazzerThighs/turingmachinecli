@@ -85,10 +85,11 @@ pub fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>, bool_slices: &mut
             .all(|turing_result| turing_result.checks[x].1 == turing_result.checks[y].1)
     };
 
-    for x in 0..(matrix[0].checks.len() - 1) {
-        for y in (x + 1)..matrix[0].checks.len() {
-            if is_coupled(x, y) {
+    for x in 0..matrix[0].checks.len() {
+        for y in 0..matrix[0].checks.len() {
+            if x != y && is_coupled(x, y) {
                 bool_slices[x][y] = true;
+                bool_slices[y][x] = true;
             }
         }
     }
@@ -96,26 +97,26 @@ pub fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>, bool_slices: &mut
     return;
 }
 
-pub fn generate_centralizing_test_list(matrix: &Vec<TuringCodeEval>, test_amount: &u8) -> Vec<usize> {
-    // returns a list of every test from the various Criteria Cards for which the number of solutions is not high enough to ensure that each does not render any of the other Tests in the Puzzle superfluous.
+// pub fn generate_centralizing_test_list(matrix: &Vec<TuringCodeEval>, test_amount: &u8) -> Vec<usize> {
+//     // returns a list of every test from the various Criteria Cards for which the number of solutions is not high enough to ensure that each does not render any of the other Tests in the Puzzle superfluous.
 
-    let mut counts: HashMap<usize, u32> = HashMap::new();
+//     let mut counts: HashMap<usize, u32> = HashMap::new();
 
-    for turing_code_eval in matrix {
-        for (index, (_, value)) in turing_code_eval.checks.iter().enumerate() {
-            if *value {
-                *counts.entry(index).or_insert(0) += 1;
-            }
-        }
-    }
+//     for turing_code_eval in matrix {
+//         for (index, (_, value)) in turing_code_eval.checks.iter().enumerate() {
+//             if *value {
+//                 *counts.entry(index).or_insert(0) += 1;
+//             }
+//         }
+//     }
 
-    return counts
-        .into_iter()
-        .filter_map(|(index, count)|
-            if count < *test_amount as u32 { 
-                Some(index) 
-            } else { 
-                None }
-            )
-        .collect();
-}
+//     return counts
+//         .into_iter()
+//         .filter_map(|(index, count)|
+//             if count < *test_amount as u32 { 
+//                 Some(index) 
+//             } else { 
+//                 None }
+//             )
+//         .collect();
+// }
