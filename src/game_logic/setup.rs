@@ -78,7 +78,7 @@ pub fn generate_results_matrix(
 
 pub fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>, bool_slices: &mut [[bool; 183]; 183]) {
     // returns a 2D array of Coupled Tests. A test is coupled to another test if for every possible Turing Code, the result of Test X matches the result of Test Y. By definition, this renders one of the tests superfluous; Test X should not be paired with Test Y in a valid Puzzle, and vice versa.
-
+    // also declares if two tests are coupled if they lie on the same Criteria Card, so they could never validly appear together in a puzzle anyway.
     let is_coupled = |x: usize, y: usize| -> bool {
         matrix
             .iter()
@@ -87,7 +87,7 @@ pub fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>, bool_slices: &mut
 
     for x in 0..matrix[0].checks.len() {
         for y in 0..matrix[0].checks.len() {
-            if x != y && is_coupled(x, y) {
+            if x != y && ((matrix[0].checks[x].0 == matrix[0].checks[y].0) || (is_coupled(x, y))) {
                 bool_slices[x][y] = true;
                 bool_slices[y][x] = true;
             }

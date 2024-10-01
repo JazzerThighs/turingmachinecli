@@ -56,7 +56,7 @@ fn generate_og_tm_puzzle_db() {
         .filter(|a: &usize| vct_4[*a] == false)
         .for_each(|a: usize| {
             for b in a + 1..matrix[0].checks.len() - 2 {
-                if vct_4[b] || matrix[0].checks[a].0 == matrix[0].checks[b].0 || couplings[a][b] {
+                if vct_4[b] || couplings[a][b] {
                     continue;
                 }
 
@@ -76,12 +76,7 @@ fn generate_og_tm_puzzle_db() {
                 }
 
                 for c in b + 1..matrix[0].checks.len() - 1 {
-                    if vct_4[c]
-                        || matrix[0].checks[a].0 == matrix[0].checks[c].0
-                        || matrix[0].checks[b].0 == matrix[0].checks[c].0
-                        || couplings[a][c]
-                        || couplings[b][c]
-                    {
+                    if vct_4[c] || couplings[a][c] || couplings[b][c] {
                         continue;
                     }
 
@@ -101,14 +96,7 @@ fn generate_og_tm_puzzle_db() {
                     }
 
                     for d in c + 1..matrix[0].checks.len() {
-                        if vct_4[d]
-                            || matrix[0].checks[a].0 == matrix[0].checks[d].0
-                            || matrix[0].checks[b].0 == matrix[0].checks[d].0
-                            || matrix[0].checks[c].0 == matrix[0].checks[d].0
-                            || couplings[a][d]
-                            || couplings[b][d]
-                            || couplings[c][d]
-                        {
+                        if vct_4[d] || couplings[a][d] || couplings[b][d] || couplings[c][d] {
                             continue;
                         }
 
@@ -149,7 +137,7 @@ fn generate_og_tm_puzzle_db() {
         .filter(|a: &usize| vct_5[*a] == false)
         .for_each(|a: usize| {
             for b in a + 1..matrix[0].checks.len() - 3 {
-                if vct_5[b] || matrix[0].checks[a].0 == matrix[0].checks[b].0 || couplings[a][b] {
+                if vct_5[b] || couplings[a][b] {
                     continue;
                 }
 
@@ -169,12 +157,7 @@ fn generate_og_tm_puzzle_db() {
                 }
 
                 for c in b + 1..matrix[0].checks.len() - 2 {
-                    if vct_5[c]
-                        || matrix[0].checks[a].0 == matrix[0].checks[c].0
-                        || matrix[0].checks[b].0 == matrix[0].checks[c].0
-                        || couplings[a][c]
-                        || couplings[b][c]
-                    {
+                    if vct_5[c] || couplings[a][c] || couplings[b][c] {
                         continue;
                     }
 
@@ -194,14 +177,7 @@ fn generate_og_tm_puzzle_db() {
                     }
 
                     for d in c + 1..matrix[0].checks.len() - 1 {
-                        if vct_5[d]
-                            || matrix[0].checks[a].0 == matrix[0].checks[d].0
-                            || matrix[0].checks[b].0 == matrix[0].checks[d].0
-                            || matrix[0].checks[c].0 == matrix[0].checks[d].0
-                            || couplings[a][d]
-                            || couplings[b][d]
-                            || couplings[c][d]
-                        {
+                        if vct_5[d] || couplings[a][d] || couplings[b][d] || couplings[c][d] {
                             continue;
                         }
 
@@ -226,10 +202,6 @@ fn generate_og_tm_puzzle_db() {
 
                         for e in d + 1..matrix[0].checks.len() {
                             if vct_5[e]
-                                || matrix[0].checks[a].0 == matrix[0].checks[e].0
-                                || matrix[0].checks[b].0 == matrix[0].checks[e].0
-                                || matrix[0].checks[c].0 == matrix[0].checks[e].0
-                                || matrix[0].checks[d].0 == matrix[0].checks[e].0
                                 || couplings[a][e]
                                 || couplings[b][e]
                                 || couplings[c][e]
@@ -277,7 +249,7 @@ fn generate_og_tm_puzzle_db() {
         .filter(|a: &usize| vct_6[*a] == false)
         .for_each(|a: usize| {
             for b in a + 1..matrix[0].checks.len() - 4 {
-                if vct_6[b] || matrix[0].checks[a].0 == matrix[0].checks[b].0 || couplings[a][b] {
+                if vct_6[b] || couplings[a][b] {
                     continue;
                 }
 
@@ -297,12 +269,7 @@ fn generate_og_tm_puzzle_db() {
                 }
 
                 for c in b + 1..matrix[0].checks.len() - 3 {
-                    if vct_6[c]
-                        || matrix[0].checks[a].0 == matrix[0].checks[c].0
-                        || matrix[0].checks[b].0 == matrix[0].checks[c].0
-                        || couplings[a][c]
-                        || couplings[b][c]
-                    {
+                    if vct_6[c] || couplings[a][c] || couplings[b][c] {
                         continue;
                     }
 
@@ -322,14 +289,7 @@ fn generate_og_tm_puzzle_db() {
                     }
 
                     for d in c + 1..matrix[0].checks.len() - 2 {
-                        if vct_6[d]
-                            || matrix[0].checks[a].0 == matrix[0].checks[d].0
-                            || matrix[0].checks[b].0 == matrix[0].checks[d].0
-                            || matrix[0].checks[c].0 == matrix[0].checks[d].0
-                            || couplings[a][d]
-                            || couplings[b][d]
-                            || couplings[c][d]
-                        {
+                        if vct_6[d] || couplings[a][d] || couplings[b][d] || couplings[c][d] {
                             continue;
                         }
 
@@ -354,10 +314,6 @@ fn generate_og_tm_puzzle_db() {
 
                         for e in d + 1..matrix[0].checks.len() - 1 {
                             if vct_6[e]
-                                || matrix[0].checks[a].0 == matrix[0].checks[e].0
-                                || matrix[0].checks[b].0 == matrix[0].checks[e].0
-                                || matrix[0].checks[c].0 == matrix[0].checks[e].0
-                                || matrix[0].checks[d].0 == matrix[0].checks[e].0
                                 || couplings[a][e]
                                 || couplings[b][e]
                                 || couplings[c][e]
@@ -388,11 +344,6 @@ fn generate_og_tm_puzzle_db() {
 
                             for f in e + 1..matrix[0].checks.len() {
                                 if vct_6[f]
-                                    || matrix[0].checks[a].0 == matrix[0].checks[f].0
-                                    || matrix[0].checks[b].0 == matrix[0].checks[f].0
-                                    || matrix[0].checks[c].0 == matrix[0].checks[f].0
-                                    || matrix[0].checks[d].0 == matrix[0].checks[f].0
-                                    || matrix[0].checks[e].0 == matrix[0].checks[f].0
                                     || couplings[a][f]
                                     || couplings[b][f]
                                     || couplings[c][f]
