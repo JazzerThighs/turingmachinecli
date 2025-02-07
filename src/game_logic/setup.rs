@@ -253,11 +253,12 @@ pub fn generate_results_matrix(
     min_digit: char,
     max_digit: char,
     og_tm_game: bool,
-) -> Vec<TuringCodeEval> {
+) -> (Vec<TuringCodeEval>, Vec<String>) {
     // Puts every Turing Code from the generate_number_pool() function through every Criteria Card's multiple Tests, and returns the resulting Vector of Structs.
 
     let codes: Vec<u32> = generate_number_pool(min_code, max_code, min_digit, max_digit);
     let mut results_matrix: Vec<TuringCodeEval> = vec![];
+    let mut cards: Vec<String> = vec![String::default()];
 
     if og_tm_game {
         for code in codes.iter() {
@@ -265,6 +266,7 @@ pub fn generate_results_matrix(
                 og_tm_board_game::criteria_card_tests::evaluate_criteria_results(code.clone()),
             )
         }
+        cards.extend(og_tm_board_game::criteria_card_strings::criteria_card_strings());
     }
     //else {
     //     for code in codes.iter() {
@@ -276,7 +278,7 @@ pub fn generate_results_matrix(
     //     }
     // }
 
-    return results_matrix;
+    return (results_matrix, cards);
 }
 
 pub fn generate_random_puzzle_code(code_length: u32, min_digit: char, max_digit: char) -> u32 {
