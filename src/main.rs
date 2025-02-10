@@ -12,14 +12,11 @@ fn main() {
     let (min_code, max_code, min_digit, max_digit, mode, difficulty, test_amount, og_tm_game) =
         set_game_parameters();
     println!("Minimum Code: {}, Maximum Code: {},\nSmallest Digit: {}, Largest Digit: {},\nGamemode: {:?}, Difficulty: {:?}", min_code, max_code, min_digit, max_digit, mode, difficulty);
-    
     let (matrix, machine, cards) =
         generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
     println!("Matrix generated...");
-    
     let target_code: u32 =
         generate_random_puzzle_code(min_code.to_string().len() as u32, min_digit, max_digit);
-    
     let puzzle: Puzzle = generate_puzzle(
         &matrix,
         &mode,
@@ -28,6 +25,7 @@ fn main() {
         target_code,
         og_tm_game,
     );
+    
     clear().unwrap();
     println!("Solution: {}", puzzle.target_code);
     for (i, test) in puzzle.tests.iter().enumerate() {

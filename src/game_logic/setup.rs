@@ -1,5 +1,5 @@
 use crate::game_logic::game_variants::*;
-use rand::{rngs::ThreadRng, Rng};
+use rand::{rngs::ThreadRng, thread_rng, Rng};
 use std::{
     collections::HashMap,
     io,
@@ -272,22 +272,21 @@ pub fn generate_results_matrix(
 
 pub fn generate_random_puzzle_code(code_length: u32, min_digit: char, max_digit: char) -> u32 {
     let mut target_code: u32 = 0;
-    let mut rng: ThreadRng = rand::thread_rng();
+    let mut rand_num: ThreadRng = thread_rng();
     for _ in 1..=code_length {
         target_code *= 10;
         target_code +=
-            rng.gen_range(min_digit.to_digit(10).unwrap()..=max_digit.to_digit(10).unwrap()) as u32;
+        rand_num.gen_range(min_digit.to_digit(10).unwrap()..=max_digit.to_digit(10).unwrap()) as u32;
     }
     target_code
 }
 
-fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
-    // returns a 2D array of Coupled Tests.
-    // A test is coupled to another test if for every possible Turing Code, the result of Test A matches the result of Test B.
-    // By definition, this renders one of the tests superfluous, and should not be paired with each other in a valid Puzzle.
+fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<bool>> {
+    let mut vec_test_couplings: Vec<Vec<bool>> = vec![vec![false; matrix[0].checks.len()]; matrix[0].checks.len()];
 
-    let mut vec_test_couplings: Vec<Vec<usize>> = vec![Vec::new(); matrix[0].checks.len()];
-
+    // returns a 2D array of Coupled Tests. A test is coupled to another test if for every possible Turing Code, the result of Test X matches the result of Test Y. 
+    // By definition, this renders one of the tests superfluous; Test X should not be paired with Test Y in a valid Puzzle, and vice versa.
+    // also declares if two tests are coupled if they lie on the same Criteria Card, so they could never validly appear together in a puzzle anyway.
     let is_coupled = |x: usize, y: usize| -> bool {
         matrix
             .iter()
@@ -296,8 +295,9 @@ fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
 
     for x in 0..matrix[0].checks.len() {
         for y in 0..matrix[0].checks.len() {
-            if x != y && is_coupled(x, y) {
-                vec_test_couplings[x].push(y);
+            if x != y && ((matrix[0].checks[x].0 == matrix[0].checks[y].0) || (is_coupled(x, y))) {
+                vec_test_couplings[x][y] = true;
+                vec_test_couplings[y][x] = true;
             }
         }
     }
@@ -305,24 +305,23 @@ fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<usize>> {
     vec_test_couplings
 }
 
-fn generate_unique_test_list(matrix: &Vec<TuringCodeEval>) -> Vec<usize> {
-    // returns a list of every test from the various Criteria Cards for which only a single Turing Code passes.
+fn generate_centralizing_test_list(matrix: &Vec<TuringCodeEval>, test_amount: u8) -> Vec<bool> {
     // The purpose of this is to ensure that no Criteria Test renders any of the other Tests in the Puzzle superfluous.
+    let mut vct: Vec<bool> = vec![false; matrix[0].checks.len()];
 
-    let mut counts: HashMap<usize, u32> = HashMap::new();
-
-    for turing_code_eval in matrix {
-        for (index, (_, value)) in turing_code_eval.checks.iter().enumerate() {
-            if *value {
-                *counts.entry(index).or_insert(0) += 1;
+    for x in 0..matrix[0].checks.len() {
+        let mut count = 0;
+        for y in 0..matrix.len() {
+            if matrix[y].checks[x].1 {
+                count += 1;
             }
+        }
+        if count < test_amount {
+            vct[x] = true;
         }
     }
 
-    counts
-        .into_iter()
-        .filter_map(|(index, count)| if count == 1 { Some(index) } else { None })
-        .collect()
+    vct
 }
 
 fn set_test_pool_range(
@@ -397,7 +396,6 @@ fn is_unique_solution(
     matrix: &Vec<TuringCodeEval>,
 ) -> bool {
     // returns true if puzzle_tests argument is a unique set of true booleans among all of the codes.
-
     for (index, turing_code_result) in matrix.iter().enumerate() {
         let all_true = puzzle_tests
             .iter()
@@ -419,99 +417,114 @@ pub fn generate_puzzle(
     target_code: u32,
     og_tm_game: bool,
 ) -> Puzzle {
-    let mut target_index: usize = 0;
-    for index in 0..matrix.len() {
-        if matrix[index].code == target_code {
-            target_index = index;
-            break;
-        }
-    }
-    let vec_test_couplings: Vec<Vec<usize>> = generate_coupled_criteria(&matrix);
-    let vec_unique_tests: Vec<usize> = generate_unique_test_list(&matrix);
-    let last_index: usize = matrix[0].checks.len() - 1;
-    for unique_banned_test in vec_unique_tests.iter() {
+    let target_index = matrix.iter().position(|item| item.code == target_code).unwrap_or(0);
+    let couplings: Vec<Vec<bool>> = generate_coupled_criteria(&matrix);
+    let vct: Vec<bool> = generate_centralizing_test_list(&matrix, test_amount);
+    for (i, banned_test) in vct.iter().enumerate() {
         println!(
             "Banned Test for uniqueness: Card {}/{}, Test {}/{};",
-            matrix[0].checks[*unique_banned_test].0,
-            matrix[0].checks[last_index].0,
-            &unique_banned_test,
-            &last_index
+            matrix[0].checks[i].0,
+            matrix[0].checks[matrix[0].checks.len() - 1].0,
+            i,
+            matrix[0].checks.len() - 1
         );
     }
-    let mut banned_tests: Vec<usize> = vec_unique_tests.clone();
-    let mut used_cards: Vec<u8> = vec![];
-    let mut puzzle: Puzzle = Puzzle {
-        target_code: target_code,
-        tests: vec![],
-    };
-    let mut tests_added: usize = 0;
+
     let half_tests: u8 = match test_amount % 2 {
         0 => test_amount / 2,
         _ => (test_amount / 2) + 1,
     };
-    let mut second_half_of_puzzle: bool = false;
 
-    print!("Generating the puzzle...");
-    let timeout: Duration = Duration::new(2, 500_000_000);
-    let mut start_time: Instant = Instant::now();
-
-    loop {
-        if start_time.elapsed() > timeout {
-            println!(
-                "Timeout reached. Failed at {} out of {} tests.Resetting puzzle generation...",
-                tests_added, test_amount
-            );
-            tests_added = 0;
-            puzzle.tests.clear();
-            banned_tests = vec_unique_tests.clone();
-            used_cards.clear();
-            start_time = Instant::now();
-        }
-
-        if tests_added >= half_tests as usize {
-            second_half_of_puzzle = true;
-        }
-        
-        let test_pool: RangeInclusive<usize> = set_test_pool_range(
+    let mut ranges: Vec<RangeInclusive<usize>> = (0..test_amount)
+        .map(|_| 0..=1)
+        .collect();
+    for i in 0..test_amount {
+        ranges[i as usize] = set_test_pool_range(
             og_tm_game,
-            last_index,
+            matrix[0].checks.len() - 1,
             mode,
             difficulty,
-            second_half_of_puzzle,
+            i >= half_tests, // More concise match expression
         );
-
-        let new_test_index: usize = generate_test_index_from_range(
-            &matrix[target_index].checks,
-            test_pool,
-            &used_cards,
-            &banned_tests,
-        );
-        puzzle.tests.push(new_test_index);
-        tests_added += 1;
-
-        if tests_added == test_amount as usize {
-            if !is_unique_solution(&target_index, &puzzle.tests, matrix) {
-                tests_added -= 1;
-                puzzle.tests.pop();
-            } else {
-                println!();
-                break;
-            }
-        } else {
-            tests_added -= 1;
-
-            if is_unique_solution(&target_index, &puzzle.tests, matrix) {
-                puzzle.tests.pop();
-            } else {
-                for index in vec_test_couplings[new_test_index].iter() {
-                    banned_tests.push(index.clone());
-                }
-                used_cards.push(matrix[target_index].checks[new_test_index].0.clone());
-                tests_added += 1;
-            }
-        }
     }
+    let adjusted_ranges: Vec<Vec<usize>> = ranges
+        .iter()
+        .map(|r| {
+            let mut rand_num = thread_rng();
+            let start = rand_num.gen_range(*r.start()..=*r.end());
+            let full_cycle: Vec<usize> = (*r).clone().collect();
+            full_cycle.iter().cycle().skip(start).take(full_cycle.len()).copied().collect()
+        })
+        .collect();
+
+    print!("Generating the puzzle...");
+
+    let mut puzzle: Puzzle = Puzzle {
+        target_code,
+        tests: vec![],
+    };
+
+    puzzle = puzzle_gen_algo(
+        &mut puzzle,
+        test_amount as usize,
+        target_index,
+        &matrix,
+        &adjusted_ranges,
+        &vct,
+        &couplings
+    );
 
     puzzle
 }
 
+fn puzzle_gen_algo(
+    puzzle: &mut Puzzle,
+    test_amount: usize,
+    target_index: usize,
+    matrix: &Vec<TuringCodeEval>,
+    adjusted_ranges: &Vec<Vec<usize>>,
+    vct: &Vec<bool>,
+    couplings: &Vec<Vec<bool>>
+) -> Puzzle {
+    if puzzle.tests.len() == test_amount 
+    {
+        return puzzle.clone();
+    }
+    // Not enough  tests yet, get more
+    let pool = adjusted_ranges[puzzle.tests.len()].clone();
+    'pool_loop: for i in pool.into_iter().filter(|a| !vct[*a]) {
+        if puzzle.tests.is_empty() {
+            puzzle.tests.push(i);
+        }
+        if puzzle.tests.len() == test_amount - 1 {
+
+        }
+        if puzzle.tests.len() > 1 {
+            for a in 0..couplings.len() - 1 {
+                if couplings[a][i] {
+                    continue 'pool_loop;
+                }
+            }
+            let mut count: usize = 0;
+            let count_bool: bool = false;
+            
+        }
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    puzzle.clone()
+}

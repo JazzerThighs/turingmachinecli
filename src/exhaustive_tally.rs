@@ -8,7 +8,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-pub fn generate_coupled_criteria(matrix: &Vec<setup::TuringCodeEval>, bool_slices: &mut [[bool; 183]; 183]) {
+fn generate_coupled_criteria(matrix: &Vec<setup::TuringCodeEval>, bool_slices: &mut [[bool; 183]; 183]) {
     // returns a 2D array of Coupled Tests. A test is coupled to another test if for every possible Turing Code, the result of Test X matches the result of Test Y. By definition, this renders one of the tests superfluous; Test X should not be paired with Test Y in a valid Puzzle, and vice versa.
     // also declares if two tests are coupled if they lie on the same Criteria Card, so they could never validly appear together in a puzzle anyway.
     let is_coupled = |x: usize, y: usize| -> bool {

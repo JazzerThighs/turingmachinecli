@@ -64,7 +64,7 @@ pub fn populate_machine_feedback(
 
     push_eval!(
         1,
-        b == 1, // matrix[_].checks[*0*].1
+        b == 1, // test index 0
         b > 1 // 1
     );
     push_eval!(
