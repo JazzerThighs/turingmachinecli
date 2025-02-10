@@ -25,8 +25,6 @@ pub fn generate_coupled_criteria(matrix: &Vec<setup::TuringCodeEval>, bool_slice
             }
         }
     }
-
-    return;
 }
 
 fn generate_og_tm_puzzle_db() {

@@ -512,6 +512,6 @@ pub fn generate_puzzle(
         }
     }
 
-    return puzzle;
+    puzzle
 }
 
