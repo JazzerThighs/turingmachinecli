@@ -1,5 +1,4 @@
 mod game_logic;
-use std::collections::HashMap;
 use clearscreen::*;
 use setup::*;
 
@@ -10,17 +9,17 @@ fn main() {
 
     // All of the functions simply set up a standard game of "Turing Machine," but also allows the player to set varying parameters for the game itself, such as the minimum digit of the codes, maximum digit, the length of the codes themselves, and the Criteria Cards available to the Puzzle-Generation algorithm (Alternative Sets of Criteria Cards for differing parameters need to be hard-coded in their own files, and implemented in the several match statements within the codebase).
     let (min_code, max_code, min_digit, max_digit, mode, difficulty, test_amount, og_tm_game) =
-        setup::set_game_parameters();
+        set_game_parameters();
     println!("Minimum Code: {}, Maximum Code: {},\nSmallest Digit: {}, Largest Digit: {},\nGamemode: {:?}, Difficulty: {:?}", min_code, max_code, min_digit, max_digit, mode, difficulty);
     
     let (matrix, machine, cards) =
-        setup::generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
+        generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
     println!("Matrix generated...");
     
     let target_code: u32 =
-        setup::generate_random_puzzle_code(min_code.to_string().len() as u32, min_digit, max_digit);
+        generate_random_puzzle_code(min_code.to_string().len() as u32, min_digit, max_digit);
     
-    let puzzle: setup::Puzzle = setup::generate_puzzle(
+    let puzzle: Puzzle = generate_puzzle(
         &matrix,
         &mode,
         &difficulty,
