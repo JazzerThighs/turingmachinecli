@@ -1,6 +1,7 @@
 mod game_logic;
 use std::collections::HashMap;
 use clearscreen::*;
+use setup::*;
 
 use crate::game_logic::*;
 
@@ -12,10 +13,9 @@ fn main() {
         setup::set_game_parameters();
     println!("Minimum Code: {}, Maximum Code: {},\nSmallest Digit: {}, Largest Digit: {},\nGamemode: {:?}, Difficulty: {:?}", min_code, max_code, min_digit, max_digit, mode, difficulty);
     
-    let (matrix, cards) =
+    let (matrix, machine, cards) =
         setup::generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
     println!("Matrix generated...");
-    // debug_helpers::print_true_instances(&matrix);
     
     let target_code: u32 =
         setup::generate_random_puzzle_code(min_code.to_string().len() as u32, min_digit, max_digit);
@@ -37,39 +37,16 @@ fn main() {
             &matrix[0].checks[*test].0
         );
         println!(
-            "Card {} Critera:\n {}",
+            "Card {} Critera:\n This Verifier verifies... {}",
             &matrix[0].checks[*test].0,
-            cards[*test]
+            cards[&matrix[0].checks[*test].0.to_string()].join("\n")
         );
-    }
-    struct CriteriaCard {
-        card: u8,
-        test: bool
-    }
-    let mut codemap: HashMap<String, Vec<CriteriaCard>> = HashMap::default();
-    for i in matrix.iter() {
-        codemap.insert(i.code.to_string(), i.checks.iter().map(|ch| CriteriaCard {card: ch.0, test: ch.1}).collect());
-    }
-    let mut cardmap: HashMap<String, Vec<String>> = HashMap::default();
-    for i in 0..cards.len() {
-        let c = cards[i].clone();
-        let splits: Vec<&str> = c.split("\n").collect();
-        let n: Vec<String> = splits[0..].iter().map(|s| s.to_string().clone()).collect();
-        cardmap.insert((i+1).to_string(), n);
-    }
-
-    let s1 = "5".to_string();
-    let s2 = "312".to_string();
-
-    if cardmap.contains_key(&s1) {
-        println!("{s1}: OK!");
-    }
-    if !cardmap.contains_key(&s2) {
-        println!("{s2}: OOPS!");
     }
 
 }
 //  TODO:
+//  - Revamp puzzle generation algo so that it doesn't need to time out, or at least not as often using the methods in the exhaustive count functions
+//
 //  - Gameplay
 //      - Classic Puzzle Gameplay
 //      - Nightmare Puzzle Gameplay
