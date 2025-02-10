@@ -30,9 +30,10 @@ fn main() {
     );
     clear().unwrap();
     println!("Solution: {}", puzzle.target_code);
-    for test in puzzle.tests.iter() {
+    for (i, test) in puzzle.tests.iter().enumerate() {
         println!(
-            "Test: {}, Card: {}",
+            "Section {}: Test: {}, Card: {}",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ".chars().nth(i % 26).unwrap(),
             test,
             &matrix[0].checks[*test].0
         );
