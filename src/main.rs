@@ -1,4 +1,5 @@
 mod game_logic;
+mod exhaustive_tally;
 use clearscreen::*;
 use setup::*;
 
