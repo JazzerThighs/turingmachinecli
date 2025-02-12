@@ -182,8 +182,8 @@ pub fn populate_machine_feedback(
     );
     push_eval!(
         21,
-        repetitions_count == 0, // 58
-        repetitions_count != 1 // 59
+        repetitions_count != 1, // 58
+        repetitions_count == 1 // 59
     );
     push_eval!(
         22,

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::game_logic::game_variants::*;
 use rand::{rngs::ThreadRng, thread_rng, Rng};
 use std::{
@@ -393,7 +395,7 @@ pub fn generate_puzzle(
     test_amount: usize,
     og_tm_game: bool,
 ) -> Puzzle {
-    let valid_code_set: Vec<u32> = matrix.iter().map(|a| a.code).collect();
+    let _valid_code_set: Vec<u32> = matrix.iter().map(|a| a.code).collect();
     let couplings: Vec<Vec<bool>> = generate_coupled_criteria(&matrix);
     let vct_whole_range: Vec<bool> = generate_centralizing_test_list_whole_range(&matrix, test_amount);
     let mut vct_whole_range_count = 0;
@@ -436,36 +438,16 @@ pub fn generate_puzzle(
 
     print!("Generating the puzzle...");
     let mut puzzle = Puzzle::default();
-    
-    // for i in valid_code_set.iter() {
-    //     puzzle = Puzzle {
-    //         target_code: *i,
-    //         tests: vec![]
-    //     };
-    //     let target_index = matrix.iter().position(|item| item.code == puzzle.target_code).unwrap_or(0);
-    //     puzzle = puzzle_gen_algo(
-    //         puzzle,
-    //         test_amount,
-    //         target_index,
-    //         &matrix,
-    //         &adjusted_ranges,
-    //         &vct_whole_range,
-    //         &couplings
-    //     );
-    //     if puzzle.tests.len() < test_amount {
-    //         println!("***{i} is NOT a valid code for a test amount of {test_amount}!");
-    //     } else {
-    //         println!("{i} is a valid code for a test amount of {test_amount}.");
-    //     }
-    // }
+
     while puzzle.tests.len() < test_amount {
-        println!("Puzzle not ready: Failed with {}, had {} tests.", puzzle.target_code, puzzle.tests.len());
-        puzzle = Puzzle::default();
-        puzzle.target_code = generate_random_puzzle_code(code_length as u32, min_digit, max_digit);
-        let target_index = matrix.iter().position(|item| item.code == puzzle.target_code).unwrap_or(0);
+        puzzle = Puzzle {
+            target_code: generate_random_puzzle_code(code_length as u32, min_digit, max_digit),
+            tests: vec![]
+        };
+        let target_index = matrix.iter().position(|item| item.code == puzzle.target_code).unwrap();
         puzzle = puzzle_gen_algo(
             puzzle,
-            test_amount,
+            &test_amount,
             target_index,
             &matrix,
             &adjusted_ranges,
@@ -478,7 +460,7 @@ pub fn generate_puzzle(
 
 fn puzzle_gen_algo(
     mut puzzle: Puzzle,
-    test_amount: usize,
+    test_amount: &usize,
     target_index: usize,
     matrix: &Vec<TuringCodeEval>,
     adjusted_ranges: &Vec<Vec<usize>>,
@@ -487,27 +469,25 @@ fn puzzle_gen_algo(
 ) -> Puzzle {
     let pool: &Vec<usize> = &adjusted_ranges[puzzle.tests.len()];
     'pool_loop: for i in pool
-        .into_iter()
-        .filter(|t| matrix[target_index].checks[**t].1)
-        .filter(|t| !vct_whole_range[**t])
+        .iter()
+        .filter(|i| matrix[target_index].checks[**i].1)
+        .filter(|i| !vct_whole_range[**i])
     {
-        if !puzzle.tests.iter().all(|&existing_test| !couplings[existing_test][*i]) {
+        if !puzzle.tests.iter().all(|&existing_test| !couplings[existing_test][*i])
+            || puzzle.tests.iter().any(|a| matrix[0].checks[*a].0 == matrix[0].checks[*i].0) 
+        {
             continue 'pool_loop;
         }
-        if puzzle.tests.iter().any(|a| matrix[0].checks[*a].0 == matrix[0].checks[*i].0) {
-            continue 'pool_loop;
-        }
-        if puzzle.tests.is_empty() {
-            puzzle.tests.push(*i);
-        } else if puzzle.tests.len() == test_amount - 1 {
+        if puzzle.tests.len() == *test_amount - 1 {
             puzzle.tests.push(*i);
             if is_unique_solution(&target_index, &puzzle.tests, &matrix) {
+                println!("{} is a valid code for a test amount of {test_amount}.", puzzle.target_code);
                 return puzzle;
             } else {
                 puzzle.tests.pop();
                 continue 'pool_loop;
             }
-        } else {
+        } else if puzzle.tests.len() < test_amount - 1 {
             puzzle.tests.push(*i);
             let valid_solution_minimum: usize = (test_amount - puzzle.tests.len()) + 1;
             let mut solution_count = 0;
@@ -537,9 +517,7 @@ fn puzzle_gen_algo(
                 continue 'pool_loop;
             }
         }
-        if (2..=test_amount).contains(&puzzle.tests.len()) {
-            puzzle.tests = vec![]
-        }
+        puzzle.tests.pop();
     }
     puzzle
 }

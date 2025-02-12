@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 mod game_logic;
 mod exhaustive_tally;
 use clearscreen::*;
@@ -12,7 +14,7 @@ fn main() {
     let (min_code, max_code, min_digit, max_digit, mode, difficulty, test_amount, og_tm_game) =
         set_game_parameters();
     println!("Minimum Code: {}, Maximum Code: {},\nSmallest Digit: {}, Largest Digit: {},\nGamemode: {:?}, Difficulty: {:?}, Test Amount: {:?}", min_code, max_code, min_digit, max_digit, mode, difficulty, test_amount);
-    let (matrix, machine, cards) =
+    let (matrix, _machine, cards) =
         generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
     println!("Matrix generated...");
     let puzzle: Puzzle = generate_puzzle(
@@ -26,13 +28,13 @@ fn main() {
         og_tm_game,
     );
 
-    println!("Solution: {}", puzzle.target_code);
+    // println!("Solution: {}", puzzle.target_code);
+    clear().unwrap();
     println!("{}", puzzle.tests.len());
     for (i, test) in puzzle.tests.iter().enumerate() {
         println!(
-            "Section {}: Test: {}, Card: {}",
+            "Section {}: Card: {}",
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ".chars().nth(i % 26).unwrap(),
-            test,
             &matrix[0].checks[*test].0
         );
         println!(
