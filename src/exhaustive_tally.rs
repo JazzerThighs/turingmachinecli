@@ -27,7 +27,7 @@ fn generate_coupled_criteria(matrix: &Vec<setup::TuringCodeEval>, bool_slices: &
     }
 }
 
-fn generate_og_tm_puzzle_db() {
+/*fn generate_og_tm_puzzle_db() {
     println!("Generating Matrix...");
     let (matrix, _, _) =
         setup::generate_results_matrix(111, 555, '1', '5', true);
@@ -403,5 +403,119 @@ fn generate_og_tm_puzzle_db() {
         puzzle_4_count.load(Ordering::Relaxed)
             + puzzle_5_count.load(Ordering::Relaxed)
             + puzzle_6_count.load(Ordering::Relaxed)
+    );
+}*/
+
+pub fn generate_og_tm_puzzle_db() {
+    println!("Generating Matrix...");
+    let (matrix, _, _) =
+        setup::generate_results_matrix(111, 555, '1', '5', true);
+    println!("Generating Matrix of Test Couplings...");
+    let mut couplings: [[bool; 183]; 183] = [[false; 183]; 183];
+    generate_coupled_criteria(&matrix, &mut couplings);
+    let couplings: [[bool; 183]; 183] = couplings;
+    println!("Generating 4-Puzzle, 5-Puzzle, and 6-Puzzle Centralizing Tests...");
+    let mut vct_4: [bool; 183] = [false; 183];
+    let mut vct_5: [bool; 183] = [false; 183];
+    let mut vct_6: [bool; 183] = [false; 183];
+    for x in 0..matrix[0].checks.len() {
+        let mut count: u8 = 0;
+        for y in 0..matrix.len() {
+            if matrix[y].checks[x].1 {
+                count += 1;
+            }
+        }
+        if count < 4 {
+            vct_4[x] = true;
+        }
+        if count < 5 {
+            vct_5[x] = true;
+        }
+        if count < 6 {
+            vct_6[x] = true;
+        }
+    }
+    let puzzle_4_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
+    let puzzle_5_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
+    let puzzle_6_count: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
+
+    let p4_start: Instant = Instant::now();
+    (0..matrix[0].checks.len() - 3)
+        .into_par_iter()
+        .filter(|a: &usize| vct_4[*a] == false)
+        .for_each(|a: usize| {
+            for b in a + 1..matrix[0].checks.len() - 2 {
+                if vct_4[b] || couplings[a][b] {
+                    continue;
+                }
+
+                let mut p2_count: u8 = 0;
+                let mut p2: bool = false;
+                for x in 0..matrix.len() {
+                    if matrix[x].checks[a].1 && matrix[x].checks[b].1 {
+                        p2_count += 1;
+                        if p2_count >= 3 {
+                            p2 = true;
+                            break;
+                        }
+                    }
+                }
+                if !p2 {
+                    continue;
+                }
+
+                for c in b + 1..matrix[0].checks.len() - 1 {
+                    if vct_4[c] || couplings[a][c] || couplings[b][c] {
+                        continue;
+                    }
+
+                    let mut p3_count: u8 = 0;
+                    let mut p3: bool = false;
+                    for x in 0..matrix.len() {
+                        if matrix[x].checks[a].1 && matrix[x].checks[b].1 && matrix[x].checks[c].1 {
+                            p3_count += 1;
+                            if p3_count >= 2 {
+                                p3 = true;
+                                break;
+                            }
+                        }
+                    }
+                    if !p3 {
+                        continue;
+                    }
+
+                    for d in c + 1..matrix[0].checks.len() {
+                        if vct_4[d] || couplings[a][d] || couplings[b][d] || couplings[c][d] {
+                            continue;
+                        }
+
+                        let mut p4_count: u8 = 0;
+                        let mut p4_fail: bool = false;
+                        for x in 0..matrix.len() {
+                            if matrix[x].checks[a].1
+                                && matrix[x].checks[b].1
+                                && matrix[x].checks[c].1
+                                && matrix[x].checks[d].1
+                            {
+                                p4_count += 1;
+                                if p4_count > 1 {
+                                    p4_fail = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if !p4_fail && p4_count == 1 {
+                            puzzle_4_count.fetch_add(1, Ordering::Relaxed);
+                        }
+                    }
+                }
+            }
+        });
+
+    let p4_duration: Duration = p4_start.elapsed();
+    println!("Duration of p4 calculation: {p4_duration:?}");
+    println!(
+        "Total # of Puzzles with 4 Criteria Cards: {:>9}",
+        puzzle_4_count.load(Ordering::Relaxed)
     );
 }
