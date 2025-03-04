@@ -384,7 +384,7 @@ pub fn populate_machine_feedback(
         b > y, // 176
         b < p, // 177
         b == p, // 178
-        b > y, // 179
+        b > p, // 179
         y < p, // 180
         y == p, // 181
         y > p // 182

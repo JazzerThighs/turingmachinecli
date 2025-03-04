@@ -512,12 +512,13 @@ fn puzzle_gen_algo(
                     &vct_whole_range,
                     &couplings
                 );
+                break 'pool_loop;
             } else {
                 puzzle.tests.pop();
                 continue 'pool_loop;
             }
         }
-        puzzle.tests.pop();
     }
+    puzzle.tests.sort();
     puzzle
 }
