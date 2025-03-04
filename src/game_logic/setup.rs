@@ -227,6 +227,61 @@ pub fn is_valid_turing_code(
             .all(|c| c >= min_digit && c <= max_digit)
 }
 
+pub fn generate_random_puzzle_code(code_length: u32, min_digit: char, max_digit: char) -> u32 {
+    let mut target_code: u32 = 0;
+    let mut rand_num: ThreadRng = thread_rng();
+    for _ in 1..=code_length {
+        target_code *= 10;
+        target_code +=
+        rand_num.gen_range(min_digit.to_digit(10).unwrap()..=max_digit.to_digit(10).unwrap()) as u32;
+    }
+    target_code
+}
+
+
+fn set_test_pool_range(
+    og_tm_game: bool,
+    last_index: usize,
+    mode: &Gamemode,
+    difficulty: &Difficulty,
+    second_half_of_puzzle: bool,
+) -> RangeInclusive<usize> {
+    use Gamemode::*;
+    use Difficulty::*;
+    let test_pool: RangeInclusive<usize>;
+    if og_tm_game {
+        if !second_half_of_puzzle {
+            test_pool = match (mode, difficulty) {
+                (Classic, Easy) => 0..=49,
+                (Classic, Standard) => 17..=62,
+                (Classic, Hard) => 69..=last_index,
+                (Extreme, Easy) => 29..=71,
+                (Extreme, Standard) => 29..=71,
+                (Extreme, Hard) => 63..=last_index,
+                (Nightmare, Easy) => 29..=49,
+                (Nightmare, Standard) => 18..=62,
+                (Nightmare, Hard) => 66..=last_index,
+            }
+        } else {
+            test_pool = match (mode, difficulty) {
+                (Classic, Easy) => 0..=49,
+                (Classic, Standard) => 0..=62,
+                (Classic, Hard) => 0..=last_index,
+                (Extreme, Easy) => 0..=71,
+                (Extreme, Standard) => 0..=71,
+                (Extreme, Hard) => 0..=last_index,
+                (Nightmare, Easy) => 0..=49,
+                (Nightmare, Standard) => 0..=62,
+                (Nightmare, Hard) => 0..=last_index,
+            }
+        }
+    } else {
+        test_pool = 0..=last_index;
+    }
+    test_pool
+}
+
+
 pub fn generate_results_matrix(
     min_code: u32,
     max_code: u32,
@@ -271,15 +326,24 @@ pub fn generate_results_matrix(
     (results_matrix, machine, cardmap)
 }
 
-pub fn generate_random_puzzle_code(code_length: u32, min_digit: char, max_digit: char) -> u32 {
-    let mut target_code: u32 = 0;
-    let mut rand_num: ThreadRng = thread_rng();
-    for _ in 1..=code_length {
-        target_code *= 10;
-        target_code +=
-        rand_num.gen_range(min_digit.to_digit(10).unwrap()..=max_digit.to_digit(10).unwrap()) as u32;
+
+
+fn is_unique_solution(
+    target_index: &usize,
+    puzzle_tests: &Vec<usize>,
+    matrix: &Vec<TuringCodeEval>,
+) -> bool {
+    // returns true if puzzle_tests argument is a unique set of true booleans among all of the codes.
+    for (index, turing_code_result) in matrix.iter().enumerate() {
+        let all_true = puzzle_tests
+            .iter()
+            .all(|&i| turing_code_result.checks.get(i).map_or(false, |&(_, b)| b));
+
+        if all_true && &index != target_index {
+            return false;
+        }
     }
-    target_code
+    true
 }
 
 fn generate_coupled_criteria(matrix: &Vec<TuringCodeEval>) -> Vec<Vec<bool>> {
@@ -323,66 +387,6 @@ fn generate_centralizing_test_list_whole_range(matrix: &Vec<TuringCodeEval>, tes
     }
 
     vct
-}
-
-fn set_test_pool_range(
-    og_tm_game: bool,
-    last_index: usize,
-    mode: &Gamemode,
-    difficulty: &Difficulty,
-    second_half_of_puzzle: bool,
-) -> RangeInclusive<usize> {
-    let test_pool: RangeInclusive<usize>;
-
-    if og_tm_game {
-        if !second_half_of_puzzle {
-            test_pool = match (mode, difficulty) {
-                (Gamemode::Classic, Difficulty::Easy) => 0..=49,
-                (Gamemode::Classic, Difficulty::Standard) => 17..=62,
-                (Gamemode::Classic, Difficulty::Hard) => 69..=last_index,
-                (Gamemode::Extreme, Difficulty::Easy) => 29..=71,
-                (Gamemode::Extreme, Difficulty::Standard) => 29..=71,
-                (Gamemode::Extreme, Difficulty::Hard) => 63..=last_index,
-                (Gamemode::Nightmare, Difficulty::Easy) => 29..=49,
-                (Gamemode::Nightmare, Difficulty::Standard) => 18..=62,
-                (Gamemode::Nightmare, Difficulty::Hard) => 66..=last_index,
-            }
-        } else {
-            test_pool = match (mode, difficulty) {
-                (Gamemode::Classic, Difficulty::Easy) => 0..=49,
-                (Gamemode::Classic, Difficulty::Standard) => 0..=62,
-                (Gamemode::Classic, Difficulty::Hard) => 0..=last_index,
-                (Gamemode::Extreme, Difficulty::Easy) => 0..=71,
-                (Gamemode::Extreme, Difficulty::Standard) => 0..=71,
-                (Gamemode::Extreme, Difficulty::Hard) => 0..=last_index,
-                (Gamemode::Nightmare, Difficulty::Easy) => 0..=49,
-                (Gamemode::Nightmare, Difficulty::Standard) => 0..=62,
-                (Gamemode::Nightmare, Difficulty::Hard) => 0..=last_index,
-            }
-        }
-    } else {
-        test_pool = 0..=last_index;
-    }
-
-    test_pool
-}
-
-fn is_unique_solution(
-    target_index: &usize,
-    puzzle_tests: &Vec<usize>,
-    matrix: &Vec<TuringCodeEval>,
-) -> bool {
-    // returns true if puzzle_tests argument is a unique set of true booleans among all of the codes.
-    for (index, turing_code_result) in matrix.iter().enumerate() {
-        let all_true = puzzle_tests
-            .iter()
-            .all(|&i| turing_code_result.checks.get(i).map_or(false, |&(_, b)| b));
-
-        if all_true && &index != target_index {
-            return false;
-        }
-    }
-    true
 }
 
 pub fn generate_puzzle(

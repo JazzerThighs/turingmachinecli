@@ -3,19 +3,16 @@
 mod game_logic;
 mod exhaustive_tally;
 use clearscreen::*;
-use setup::*;
-
-use crate::game_logic::*;
 
 fn main() {
     println!("~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~\nWelcome to the Turing Machine CLI!\n\nThis program is a personal project based off of the board game called \"Turing Machine\" designed by Fabien Gridel & Yoann Levet.\n~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~\n");
 
     // All of the functions simply set up a standard game of "Turing Machine," but also allows the player to set varying parameters for the game itself, such as the minimum digit of the codes, maximum digit, the length of the codes themselves, and the Criteria Cards available to the Puzzle-Generation algorithm (Alternative Sets of Criteria Cards for differing parameters need to be hard-coded in their own files, and implemented in the several match statements within the codebase).
     let (min_code, max_code, min_digit, max_digit, mode, difficulty, test_amount, og_tm_game) =
-        set_game_parameters();
+        game_logic::setup::set_game_parameters();
     let (matrix, machine, cards) =
-        generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
-    let puzzle: game_logic::setup::Puzzle = generate_puzzle(
+        game_logic::setup::generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
+    let puzzle: game_logic::setup::Puzzle = game_logic::setup::generate_puzzle(
         min_code.to_string().len(),
         min_digit,
         max_digit,
