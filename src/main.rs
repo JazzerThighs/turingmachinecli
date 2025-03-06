@@ -1,59 +1,50 @@
 #![allow(dead_code)]
 
-mod game_logic;
 mod exhaustive_tally;
+mod game_logic;
+use crate::game_logic::*;
 use clearscreen::*;
 
 fn main() {
     println!("~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~\nWelcome to the Turing Machine CLI!\n\nThis program is a personal project based off of the board game called \"Turing Machine\" designed by Fabien Gridel & Yoann Levet.\n~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~\n");
-
     // All of the functions simply set up a standard game of "Turing Machine," but also allows the player to set varying parameters for the game itself, such as the minimum digit of the codes, maximum digit, the length of the codes themselves, and the Criteria Cards available to the Puzzle-Generation algorithm (Alternative Sets of Criteria Cards for differing parameters need to be hard-coded in their own files, and implemented in the several match statements within the codebase).
-    let (min_code, max_code, min_digit, max_digit, mode, difficulty, test_amount, og_tm_game) =
-        game_logic::setup::set_game_parameters();
-    let (matrix, machine, cards) =
-        game_logic::setup::generate_results_matrix(min_code, max_code, min_digit, max_digit, og_tm_game);
-    let puzzle: game_logic::setup::Puzzle = game_logic::setup::generate_puzzle(
-        min_code.to_string().len(),
-        min_digit,
-        max_digit,
-        &matrix,
-        &mode,
-        &difficulty,
-        test_amount,
-        og_tm_game,
-    );
-
-
+    let mp: MachineParams = set_game_parameters();
+    let (matrix, machine, cards) = generate_results_matrix(&mp);
+    let puzzle: Puzzle = generate_puzzle(&matrix, &mp);
     clear().unwrap();
-    let mut vec_card_candidates: Vec<Vec<String>> = vec![vec![]; puzzle.tests.len()];
-    let mut vec_batches: Vec<Vec<Vec<String>>> = vec![vec![]; puzzle.tests.len()];
-    let mut card_nums: Vec<String> = vec![];
     // println!("Solution: {}", puzzle.target_code);
     for (i, test) in puzzle.tests.iter().enumerate() {
-        card_nums.push(matrix[0].checks[*test].0.to_string());
         println!(
             "Section {}: Card: {}",
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ".chars().nth(i % 26).unwrap(),
-            &matrix[0].checks[*test].0
+            section_label(&i),
+            *test.card
         );
         println!(
             "Card {} Critera:\n This Verifier verifies... {}",
-            &matrix[0].checks[*test].0,
-            cards[&matrix[0].checks[*test].0.to_string()].join("\n")
+            *test.card,
+            cards[&matrix[0].checks[*test.big_index].card].join("\n")
         );
     }
-
-    let any_tests_positive = |card: &String, code: &String| machine[card.parse::<usize>().unwrap() - 1][code].iter().filter(|a| **a).count() > 0;
-    let all_cards_matched = |code: &String| card_nums.iter().all(|card| any_tests_positive(card, &code));
-    let mut solution_pool: Vec<String> = vec![];
+    let any_tests_positive =
+        |card: &Card, code: &Code| machine[card][code].iter().filter(|a| **a).count() > 0;
+    let all_cards_matched = |code: &Code| {
+        puzzle
+            .tests
+            .iter()
+            .map(|t| t.card.clone())
+            .collect::<Vec<Card>>()
+            .iter()
+            .all(|card| any_tests_positive(card, &code))
+    };
+    let mut solution_pool: Vec<Code> = vec![];
     for (_, tce) in matrix.iter().enumerate() {
-        let code = tce.code.to_string();
+        let code = &tce.code;
         if all_cards_matched(&code) {
             solution_pool.push(code.clone());
         }
     }
     for i in solution_pool {
-        println!("{i}");
+        println!("{}", *i);
     }
 }
 

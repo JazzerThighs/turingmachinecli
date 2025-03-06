@@ -1,4 +1,3 @@
-pub mod setup;
 pub mod round_loop;
 pub mod player_notes;
 pub mod game_variants;
@@ -14,6 +13,8 @@ use crate::game_logic::game_variants::*;
 pub type Matrix = Vec<TuringCodeEval>;
 pub type Machine = HashMap<Card, HashMap<Code, Vec<bool>>>;
 pub type CardStrings = HashMap<Card, Vec<String>>;
+pub type Couplings = Vec<Vec<bool>>;
+pub type Centralized = Vec<bool>;
 
 #[derive(Debug)]
 pub enum Gamemode {
@@ -124,6 +125,20 @@ pub struct Puzzle {
     pub tests: Vec<Section>,
 }
 
+pub fn section_label(i: &usize) -> String {
+    let mut index = i.clone();
+    let mut label = String::new();
+    loop {
+        label.insert(0, (b'A' + (index % 26) as u8) as char);
+        index /= 26;
+        if index == 0 {
+            break;
+        }
+        index -= 1;
+    }
+    label
+}
+
 #[allow(unused_assignments)]
 pub fn set_game_parameters() -> MachineParams {
     // This entire function allows the user to set all of the parameters of the Puzzle that will be generated to play.
@@ -168,7 +183,7 @@ pub fn set_game_parameters() -> MachineParams {
                         .read_line(&mut input)
                         .expect("Failed to read line");
                     min_digit = match input.trim() {
-                        "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => input.trim().chars().next().expect("empty input"),
+                        x if "0123456789".contains(x.trim()) => x.trim().chars().next().expect("empty input"),
                         _ => {
                             println!("Invalid smallest digit character \"{}\"", input.trim());
                             continue;
@@ -182,7 +197,7 @@ pub fn set_game_parameters() -> MachineParams {
                         .read_line(&mut input)
                         .expect("Failed to read line");
                     max_digit = match input.trim() {
-                        "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => input.trim().chars().next().expect("empty input"),
+                        x if "0123456789".contains(x.trim()) => x.trim().chars().next().expect("empty input"),
                         _ => {
                             println!("Invalid largest digit character \"{}\"", input.trim());
                             continue;
@@ -311,7 +326,7 @@ pub fn is_valid_turing_code(mp: &MachineParams, test_code: Code) -> bool {
             .all(|c| c >= mp.min_digit && c <= mp.max_digit)
 }
 
-pub fn generate_random_puzzle_code(mp: &MachineParams) -> Code {
+fn generate_random_puzzle_code(mp: &MachineParams) -> Code {
     let mut target_code: Code = Code(0);
     let mut rand_num: ThreadRng = thread_rng();
     for _ in 1..=mp.code_len {
@@ -323,7 +338,7 @@ pub fn generate_random_puzzle_code(mp: &MachineParams) -> Code {
 }
 
 #[rustfmt::skip]
-pub fn set_test_pool_range(mp: &MachineParams, last_index: usize, second_half_of_puzzle: bool,) -> RangeInclusive<usize> {
+fn set_test_pool_range(mp: &MachineParams, last_index: usize, second_half_of_puzzle: bool,) -> RangeInclusive<usize> {
     use Gamemode::*;
     use Difficulty::*;
     match (
@@ -362,67 +377,235 @@ pub fn generate_results_matrix(mp: &MachineParams) -> (Matrix, Machine, CardStri
         .collect();
     let mut matrix: Matrix = vec![];
     let mut machine: Machine = HashMap::default();
-    let mut cards: CardStrings = HashMap::default();
+    let mut cards: Vec<String> = vec![];
     if mp.og_tm_game {
         for code in codes.iter(){
             matrix.push(
-                og_tm_board_game::criteria_card_tests::populate_machine_feedback_2(*code, &mut machine),
+                og_tm_board_game::criteria_card_tests::populate_machine_feedback(code, &mut machine),
             )
         }
-        cards = og_tm_board_game::criteria_card_strings::criteria_card_strings_2s();
+        cards = og_tm_board_game::criteria_card_strings::criteria_card_strings();
     }
     // else {
     //     for code in codes.iter() {
-    //         match (min_code, max_code, min_digit, max_digit) {
+    //         match (mp.min_code, mp.max_code, mp.min_digit, mp.max_digit) {
     //             (111, 555, '1', '5') => results_matrix.push(len3_min1_max5::criteria_card_tests::populate_machine_feedback(*code, &mut machine)),
     //             _ => {}
     //         }
     //     }
-    //     match (min_code, max_code, min_digit, max_digit) {
+    //     match (mp.min_code, mp.max_code, mp.min_digit, mp.max_digit) {
     //         (111, 555, '1', '5') => cards.extend(len3_min1_max5::criteria_card_strings::criteria_card_strings()),
     //         _ => {}
     //     }
     // }
-    let mut cardmap: HashMap<String, Vec<String>> = HashMap::default();
+    let mut cardmap: CardStrings = HashMap::default();
     for i in 0..cards.len() {
         let c = &cards[i];
         let splits: Vec<&str> = c.split("\n").collect();
         let n: Vec<String> = splits[0..].iter().map(|s| s.to_string()).collect();
-        cardmap.insert((i + 1).to_string(), n);
+        cardmap.insert(Card(i + 1), n);
     }
     (matrix, machine, cardmap)
+}
 
-    
-    // let codes: Vec<u32> = (min_code..=max_code).into_iter().filter(|code| is_valid_turing_code(min_code, max_code, min_digit, max_digit, *code)).collect();
-    // let mut results_matrix: Vec<TuringCodeEval> = vec![];
-    // let mut machine: Vec<HashMap<String, Vec<bool>>> = vec![];
-    // let mut cards: Vec<String> = vec![];
-    // if og_tm_game {
-    //     for code in codes.iter() {
-    //         results_matrix.push(
-    //             og_tm_board_game::criteria_card_tests::populate_machine_feedback(*code, &mut machine),
-    //         )
-    //     }
-    //     cards.extend(og_tm_board_game::criteria_card_strings::criteria_card_strings());
+fn is_unique_solution(
+    target_index: &BigIndex,
+    puzzle_tests: &Vec<BigIndex>,
+    matrix: &Matrix,
+) -> bool {
+    // returns true if puzzle_tests argument is a unique set of true booleans among all of the codes.
+    for (index, turing_code_result) in matrix.iter().enumerate() {
+        let all_true = puzzle_tests
+            .iter()
+            .all(|i| turing_code_result.checks.get(**i).map_or(false, |b| b.passed));
+        if all_true && index != **target_index {
+            return false;
+        }
+    }
+    true
+}
+
+fn generate_coupled_criteria(matrix: &Matrix) -> Couplings {
+    // Returns a 2D array of Coupled Tests. A test is coupled to another test if for every possible Turing Code, the result of Test X matches the result of Test Y. 
+    // By definition, this renders one of the tests superfluous; Test X should not be paired with Test Y in a valid Puzzle, and vice versa.
+    // Also declares if two tests are coupled if they lie on the same Criteria Card, so they could never validly appear together in a puzzle anyway.
+    let mut vec_test_couplings: Couplings = vec![vec![false; matrix[0].checks.len()]; matrix[0].checks.len()];
+    let is_coupled = |x: usize, y: usize| -> bool {
+        matrix
+            .iter()
+            .all(|turing_result| turing_result.checks[x].passed == turing_result.checks[y].passed)
+    };
+    for x in 0..matrix[0].checks.len() {
+        for y in 0..matrix[0].checks.len() {
+            if x != y && (*matrix[0].checks[x].card == *matrix[0].checks[y].card || is_coupled(x, y)) {
+                vec_test_couplings[x][y] = true;
+                vec_test_couplings[y][x] = true;
+            }
+        }
+    }
+    vec_test_couplings
+}
+
+fn generate_centralizing_test_list_whole_range(matrix: &Matrix, mp: &MachineParams) -> Centralized {
+    // The purpose of this is to ensure that no Criteria Test renders any of the other Tests in the Puzzle superfluous by being true for a number of tests that is fewer than the number of tests in the puzzle.
+    let mut vec_centralized_tests: Centralized = vec![false; matrix[0].checks.len()];
+    for x in 0..matrix[0].checks.len() {
+        let mut count = 0;
+        for y in 0..matrix.len() {
+            if matrix[y].checks[x].passed {
+                count += 1;
+            }
+        }
+        if count < mp.test_amount {
+            vec_centralized_tests[x] = true;
+        }
+    }
+    vec_centralized_tests
+}
+
+pub fn generate_puzzle(matrix: &Vec<TuringCodeEval>, mp: &MachineParams) -> Puzzle {
+    let couplings: Vec<Vec<bool>> = generate_coupled_criteria(&matrix);
+    let vct_whole_range: Vec<bool> = generate_centralizing_test_list_whole_range(&matrix, mp);
+    let mut vct_whole_range_count = 0;
+    for (i, _) in vct_whole_range.iter().enumerate().filter(|a| *a.1) {
+        vct_whole_range_count += 1;
+        println!(
+            "Banned Test for uniqueness: Card {}/{}, Test {}/{};",
+            *matrix[0].checks[i].card,
+            *matrix[0].checks[matrix[0].checks.len() - 1].card,
+            i,
+            matrix[0].checks.len() - 1
+        );
+    }
+    println!("Number of centralizing tests: {vct_whole_range_count}");
+    // let half_tests = match mp.test_amount % 2 {
+    //     0 => mp.test_amount / 2,
+    //     _ => (mp.test_amount / 2) + 1,
+    // };
+    // let mut ranges: Vec<RangeInclusive<usize>> = (0..mp.test_amount)
+    //     .map(|_| 0..=1)
+    //     .collect();
+    // for i in 0..mp.test_amount {
+    //     ranges[i] = set_test_pool_range(
+    //         mp,
+    //         matrix[0].checks.len() - 1,
+    //         i >= half_tests,
+    //     );
     // }
-    // // else {
-    // //     for code in codes.iter() {
-    // //         match (min_code, max_code, min_digit, max_digit) {
-    // //             (111, 555, '1', '5') => results_matrix.push(len3_min1_max5::criteria_card_tests::populate_machine_feedback(*code, &mut machine)),
-    // //             _ => {}
-    // //         }
-    // //     }
-    // //     match (min_code, max_code, min_digit, max_digit) {
-    // //         (111, 555, '1', '5') => cards.extend(len3_min1_max5::criteria_card_strings::criteria_card_strings()),
-    // //         _ => {}
-    // //     }
-    // // }
-    // let mut cardmap: HashMap<String, Vec<String>> = HashMap::default();
-    // for i in 0..cards.len() {
-    //     let c = &cards[i];
-    //     let splits: Vec<&str> = c.split("\n").collect();
-    //     let n: Vec<String> = splits[0..].iter().map(|s| s.to_string()).collect();
-    //     cardmap.insert((i + 1).to_string(), n);
-    // }
-    // (results_matrix, machine, cardmap)
+    // let adjusted_ranges: Vec<Vec<usize>> = ranges
+    //     .iter()
+    //     .map(|r| {
+    //         let mut rand_num = thread_rng();
+    //         let start = rand_num.gen_range(*r.start()..=*r.end());
+    //         let full_cycle: Vec<usize> = (*r).clone().collect();
+    //         full_cycle.iter().cycle().skip(start).take(full_cycle.len()).copied().collect()
+    //     })
+    //     .collect();
+    let adjusted_ranges: Vec<Vec<usize>> = (0..mp.test_amount)
+        .map(|i| {
+            let r = set_test_pool_range(mp, matrix[0].checks.len() - 1, i >= mp.test_amount.div_ceil(2));
+            let mut rand_num = thread_rng();
+            let start = rand_num.gen_range(*r.start()..=*r.end());
+            let full_cycle: Vec<usize> = r.clone().collect();
+            full_cycle.iter().cycle().skip(start).take(full_cycle.len()).copied().collect()
+        })
+        .collect();
+
+    print!("Generating the puzzle...");
+    let mut puzzle = Puzzle::default();
+
+    while puzzle.tests.len() < mp.test_amount {
+        puzzle = Puzzle {
+            target_code: generate_random_puzzle_code(mp),
+            tests: vec![]
+        };
+        let target_index = matrix.iter().position(|item| item.code == puzzle.target_code).unwrap();
+        puzzle = puzzle_gen_algo(
+            puzzle,
+            &mp.test_amount,
+            target_index,
+            &matrix,
+            &adjusted_ranges,
+            &vct_whole_range,
+            &couplings
+        );
+    }
+    puzzle
+}
+
+fn puzzle_gen_algo(
+    mut puzzle: Puzzle,
+    test_amount: &usize,
+    target_index: usize,
+    matrix: &Vec<TuringCodeEval>,
+    adjusted_ranges: &Vec<Vec<usize>>,
+    vct_whole_range: &Vec<bool>,
+    couplings: &Vec<Vec<bool>>
+) -> Puzzle {
+    let pool: &Vec<usize> = &adjusted_ranges[puzzle.tests.len()];
+    'pool_loop: for i in pool
+        .iter()
+        .filter(|i| matrix[target_index].checks[**i].passed)
+        .filter(|i| !vct_whole_range[**i])
+    {
+        if !puzzle.tests.iter().all(|existing_test| !couplings[*existing_test.big_index][*i])
+            || puzzle.tests.iter().any(|a| *matrix[0].checks[*a.big_index].card == *matrix[0].checks[*i].card) 
+        {
+            continue 'pool_loop;
+        }
+        if puzzle.tests.len() == *test_amount - 1 {
+            puzzle.tests.push(
+                Section {
+                    card: matrix[0].checks[*i].card.clone(),
+                    small_index: matrix[0].checks[*i].small_index.clone(),
+                    big_index: BigIndex(*i)
+                }
+            );
+            if is_unique_solution(&BigIndex(target_index), &puzzle.tests.iter().map(|t| t.big_index.clone()).collect(), &matrix) {
+                println!("{} is a valid code for a test amount of {test_amount}.", *puzzle.target_code);
+                return puzzle;
+            } else {
+                puzzle.tests.pop();
+                continue 'pool_loop;
+            }
+        } else if puzzle.tests.len() < test_amount - 1 {
+            puzzle.tests.push(
+                Section {
+                    card: matrix[0].checks[*i].card.clone(),
+                    small_index: matrix[0].checks[*i].small_index.clone(),
+                    big_index: BigIndex(*i)
+                }
+            );
+            let valid_solution_minimum: usize = (test_amount - puzzle.tests.len()) + 1;
+            let mut solution_count = 0;
+            'solution_counting: for (_, turing_code_result) in matrix.iter().enumerate() {
+                if puzzle.tests
+                    .iter()
+                    .all(|i| turing_code_result.checks.get(*i.big_index).map_or(false, |b| b.passed)) 
+                {
+                    solution_count += 1;
+                    if solution_count == valid_solution_minimum {
+                        break 'solution_counting;
+                    }
+                }
+            }
+            if solution_count == valid_solution_minimum {
+                puzzle = puzzle_gen_algo(
+                    puzzle,
+                    test_amount,
+                    target_index,
+                    &matrix,
+                    &adjusted_ranges,
+                    &vct_whole_range,
+                    &couplings
+                );
+                break 'pool_loop;
+            } else {
+                puzzle.tests.pop();
+                continue 'pool_loop;
+            }
+        }
+    }
+    puzzle.tests.sort_by(|a, b| a.big_index.cmp(&*b.big_index));
+    puzzle
 }

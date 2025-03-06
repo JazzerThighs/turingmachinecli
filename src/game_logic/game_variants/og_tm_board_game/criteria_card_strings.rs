@@ -54,6 +54,6 @@ pub fn criteria_card_strings() -> Vec<String> {
     vec_criteria_cards.push(format!("how many 3's or how many 4's there are in the code: \n I:    zero 3's; \n II:   zero 4's; \n III:  one 3; \n IV:   one 4; \n V:    two 3's; \n VI:   two 4's;"));
     vec_criteria_cards.push(format!("how many 1's or how many 4's there are in the code: \n I:    zero 1's; \n II:   zero 4's; \n III:  one 1; \n IV:   one 4; \n V:    two 1's; \n VI:   two 4's;"));
     vec_criteria_cards.push(format!("one specific color compared to another specific color: \n I:    {blue} < {yellow}; \n II:   {blue} == {yellow}; \n III:  {blue} > {yellow}; \n IV:   {blue} < {purple}; \n V:    {blue} == {purple}; \n VI:   {blue} > {purple}; \n VII:  {yellow} < {purple}; \n VIII: {yellow} == {purple}; \n IX:   {yellow} > {purple};"));
-
-    return vec_criteria_cards;
+    
+    vec_criteria_cards
 }
