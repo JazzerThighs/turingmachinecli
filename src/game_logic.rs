@@ -7,7 +7,7 @@ use std::{
     ops::{Deref, DerefMut, RangeInclusive},
     io,
 };
-use rand::{rngs::ThreadRng, thread_rng, Rng};
+use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng, Rng};
 use crate::game_logic::game_variants::*;
 
 pub type Matrix = Vec<TuringCodeEval>;
@@ -125,18 +125,10 @@ pub struct Puzzle {
     pub tests: Vec<Section>,
 }
 
-pub fn section_label(i: &usize) -> String {
-    let mut index = i.clone();
-    let mut label = String::new();
-    loop {
-        label.insert(0, (b'A' + (index % 26) as u8) as char);
-        index /= 26;
-        if index == 0 {
-            break;
-        }
-        index -= 1;
-    }
-    label
+pub struct Verifier<'a> {
+    pub test: &'a BigIndex,
+    section_marker: String,
+    pub label: String
 }
 
 #[allow(unused_assignments)]
@@ -608,4 +600,61 @@ fn puzzle_gen_algo(
     }
     puzzle.tests.sort_by(|a, b| a.big_index.cmp(&*b.big_index));
     puzzle
+}
+
+pub fn make_label(i: &usize, character: char) -> String {
+    let mut index = i.clone();
+    let mut label = String::new();
+    loop {
+        label.insert(0, (character as u8 + (index % 26) as u8) as char);
+        index /= 26;
+        if index == 0 {
+            break;
+        }
+        index -= 1;
+    }
+    label
+}
+
+pub fn generate_verifiers<'a, 'b>(puzzle: &'a Puzzle, mp: &'b MachineParams) -> Vec<Verifier<'a>> {
+    let mut verifiers: Vec<Verifier> = vec![];
+    for (i, t) in puzzle.tests.iter().enumerate() {
+        verifiers.push(
+            Verifier {
+                test: &t.big_index, 
+                section_marker: make_label(&i, 'A'),
+                label: make_label(&i, 'a')
+            }
+        );
+    }
+    match mp.gamemode {
+        Gamemode::Nightmare => {
+            let mut rng = thread_rng();
+            let mut refs: Vec<(&BigIndex, String)> = verifiers.iter().map(|v| (v.test, v.section_marker.clone())).collect();
+            refs.shuffle(&mut rng);
+            for (i, b) in refs.iter().enumerate() {
+                verifiers[i].test = b.0;
+                verifiers[i].section_marker = b.1.clone()
+            }
+        }
+        _ => {}
+    }
+    verifiers
+}
+
+pub fn any_tests_positive(card: &Card, code: &Code, machine: &Machine) -> bool {
+    machine[card][code]
+        .iter()
+        .filter(|a| **a)
+        .count() > 0
+}
+
+pub fn all_cards_matched(code: &Code, puzzle: &Puzzle, machine: &Machine) -> bool {
+    puzzle
+        .tests
+        .iter()
+        .map(|t| t.card.clone())
+        .collect::<Vec<Card>>()
+        .iter()
+        .all(|card| any_tests_positive(card, &code, &machine))
 }

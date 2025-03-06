@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-mod exhaustive_tally;
 mod game_logic;
 use crate::game_logic::*;
 use clearscreen::*;
@@ -11,12 +10,13 @@ fn main() {
     let mp: MachineParams = set_game_parameters();
     let (matrix, machine, cards) = generate_results_matrix(&mp);
     let puzzle: Puzzle = generate_puzzle(&matrix, &mp);
+    let mut verifiers: Vec<Verifier> = generate_verifiers(&puzzle, &mp);
     clear().unwrap();
-    // println!("Solution: {}", puzzle.target_code);
+    // println!("Solution: {}", *puzzle.target_code);
     for (i, test) in puzzle.tests.iter().enumerate() {
         println!(
             "Section {}: Card: {}",
-            section_label(&i),
+            make_label(&i, 'A'),
             *test.card
         );
         println!(
@@ -25,27 +25,18 @@ fn main() {
             cards[&matrix[0].checks[*test.big_index].card].join("\n")
         );
     }
-    let any_tests_positive =
-        |card: &Card, code: &Code| machine[card][code].iter().filter(|a| **a).count() > 0;
-    let all_cards_matched = |code: &Code| {
-        puzzle
-            .tests
-            .iter()
-            .map(|t| t.card.clone())
-            .collect::<Vec<Card>>()
-            .iter()
-            .all(|card| any_tests_positive(card, &code))
-    };
     let mut solution_pool: Vec<Code> = vec![];
     for (_, tce) in matrix.iter().enumerate() {
         let code = &tce.code;
-        if all_cards_matched(&code) {
+        if all_cards_matched(&code, &puzzle, &machine) {
             solution_pool.push(code.clone());
         }
     }
-    for i in solution_pool {
-        println!("{}", *i);
-    }
+    // for i in solution_pool {
+    //     println!("{}", *i);
+    // }
+
+    
 }
 
 //  TODO:
