@@ -1,6 +1,7 @@
 pub mod round_loop;
-pub mod player_notes;
+pub mod display;
 pub mod game_variants;
+pub mod cpu_player;
 
 use std::{
     collections::HashMap,
@@ -114,6 +115,7 @@ pub struct TuringCodeEval {
 
 #[derive(Clone, Default)]
 pub struct Section {
+    pub marker: String,
     pub card: Card,
     pub small_index: SmallIndex,
     pub big_index: BigIndex,
@@ -522,6 +524,9 @@ pub fn generate_puzzle(matrix: &Vec<TuringCodeEval>, mp: &MachineParams) -> Puzz
             &couplings
         );
     }
+    for (i, test) in puzzle.tests.iter_mut().enumerate() {
+        test.marker = make_label(&i, 'A');
+    }
     puzzle
 }
 
@@ -548,6 +553,7 @@ fn puzzle_gen_algo(
         if puzzle.tests.len() == *test_amount - 1 {
             puzzle.tests.push(
                 Section {
+                    marker: "".to_string(),
                     card: matrix[0].checks[*i].card.clone(),
                     small_index: matrix[0].checks[*i].small_index.clone(),
                     big_index: BigIndex(*i)
@@ -563,6 +569,7 @@ fn puzzle_gen_algo(
         } else if puzzle.tests.len() < test_amount - 1 {
             puzzle.tests.push(
                 Section {
+                    marker: "".to_string(),
                     card: matrix[0].checks[*i].card.clone(),
                     small_index: matrix[0].checks[*i].small_index.clone(),
                     big_index: BigIndex(*i)
@@ -642,19 +649,4 @@ pub fn generate_verifiers<'a, 'b>(puzzle: &'a Puzzle, mp: &'b MachineParams) -> 
     verifiers
 }
 
-pub fn any_tests_positive(card: &Card, code: &Code, machine: &Machine) -> bool {
-    machine[card][code]
-        .iter()
-        .filter(|a| **a)
-        .count() > 0
-}
 
-pub fn all_cards_matched(code: &Code, puzzle: &Puzzle, machine: &Machine) -> bool {
-    puzzle
-        .tests
-        .iter()
-        .map(|t| t.card.clone())
-        .collect::<Vec<Card>>()
-        .iter()
-        .all(|card| any_tests_positive(card, &code, &machine))
-}

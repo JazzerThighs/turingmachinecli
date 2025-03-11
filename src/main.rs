@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 mod game_logic;
-use crate::game_logic::*;
+use crate::game_logic::{cpu_player::*, round_loop::*, *};
 use clearscreen::*;
 
 fn main() {
@@ -16,7 +16,7 @@ fn main() {
     for (i, test) in puzzle.tests.iter().enumerate() {
         println!(
             "Section {}: Card: {}",
-            make_label(&i, 'A'),
+            test.marker,
             *test.card
         );
         println!(
@@ -35,8 +35,7 @@ fn main() {
     // for i in solution_pool {
     //     println!("{}", *i);
     // }
-
-    
+    play_game(&puzzle, &mut verifiers, &matrix, &machine, &mp);
 }
 
 //  TODO:
