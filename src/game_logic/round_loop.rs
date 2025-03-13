@@ -1,10 +1,9 @@
 use crate::game_logic::{Difficulty::*, Gamemode::*, *};
+use colored::Colorize;
 
 pub fn play_game(
-    puzzle: &Puzzle,
+    puzzle: &mut Puzzle,
     verifiers: &mut Vec<Verifier>,
-    matrix: &Matrix,
-    machine: &Machine,
     mp: &MachineParams,
 ) {
     let mut score_tally: Vec<usize> = vec![];
@@ -75,13 +74,42 @@ pub fn play_game(
         // Step 3: Select up to 3 Machine Sections to test the Turing Code against.
         let mut section_test_count: usize = 0;
         'step_three: loop {
-
+            if section_test_count == 3 {
+                break 'step_three;
+            }
+            let mut input = String::new();
+            println!("Select up to {} more section{} to test your Turing Code against, or enter \"done\" to move on.",
+                3 - section_test_count,
+                if 3 - section_test_count > 1 { "s" } else { "" }
+            );
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read line");
+            if input.trim() == "done" {
+                break 'step_three;
+            }
+            for i in puzzle.tests.iter() {
+                if i.marker == input.trim().to_string() {
+                    section_test_count += 1;
+                    println!(
+                        "Section {} tested against {}: {}",
+                        i.marker,
+                        *test_code,
+                        match puzzle.matrix[*test_code].checks[*i.big_index].passed {
+                            true => "TRUE".on_green(),
+                            false => "FALSE".on_red(),
+                        }
+                    );
+                    continue 'step_three;
+                }
+            }
+            println!("Invalid section label \"{}\"", input)
         }
         score_tally.push(section_test_count);
         // Step 4: Mark up the cards using the deductions.
-        'step_four: loop {
-            
-        }
+        // 'step_four: loop {
+
+        // }
         // Step 5: Go back to Step 1.
     }
 }

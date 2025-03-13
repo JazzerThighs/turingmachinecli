@@ -265,6 +265,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "roman-numerals"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e09ad92f1db5d14b18d369c9dc474ba56caec21d1ff0d21085c8a44337152fbd"
+
+[[package]]
 name = "rustix"
 version = "0.38.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -334,6 +340,7 @@ dependencies = [
  "colored",
  "rand",
  "rayon",
+ "roman-numerals",
 ]
 
 [[package]]

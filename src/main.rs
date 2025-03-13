@@ -9,33 +9,22 @@ fn main() {
     // All of the functions simply set up a standard game of "Turing Machine," but also allows the player to set varying parameters for the game itself, such as the minimum digit of the codes, maximum digit, the length of the codes themselves, and the Criteria Cards available to the Puzzle-Generation algorithm (Alternative Sets of Criteria Cards for differing parameters need to be hard-coded in their own files, and implemented in the several match statements within the codebase).
     let mp: MachineParams = set_game_parameters();
     let (matrix, machine, cards) = generate_results_matrix(&mp);
-    let puzzle: Puzzle = generate_puzzle(&matrix, &mp);
+    let puzzle: Puzzle = generate_puzzle(matrix, machine, cards, &mp);
     let mut verifiers: Vec<Verifier> = generate_verifiers(&puzzle, &mp);
     clear().unwrap();
     // println!("Solution: {}", *puzzle.target_code);
-    for (i, test) in puzzle.tests.iter().enumerate() {
-        println!(
-            "Section {}: Card: {}",
-            test.marker,
-            *test.card
-        );
-        println!(
-            "Card {} Critera:\n This Verifier verifies... {}",
-            *test.card,
-            cards[&matrix[0].checks[*test.big_index].card].join("\n")
-        );
-    }
+    println!("{puzzle}");
     let mut solution_pool: Vec<Code> = vec![];
-    for (_, tce) in matrix.iter().enumerate() {
+    for (_, tce) in puzzle.matrix.iter().enumerate() {
         let code = &tce.code;
-        if all_cards_matched(&code, &puzzle, &machine) {
+        if all_cards_matched(&code, &puzzle) {
             solution_pool.push(code.clone());
         }
     }
     // for i in solution_pool {
     //     println!("{}", *i);
     // }
-    play_game(&puzzle, &mut verifiers, &matrix, &machine, &mp);
+    play_game(&puzzle, &mut verifiers, &mp);
 }
 
 //  TODO:
