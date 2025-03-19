@@ -78,7 +78,7 @@ pub fn play_game(
                 break 'step_three;
             }
             let mut input = String::new();
-            println!("Select up to {} more section{} to test your Turing Code against, or enter \"done\" to move on.",
+            println!("Select a section to test your Turing Code against. You have up to {} more section{} to select, or you can enter \"done\" to move on.",
                 3 - section_test_count,
                 if 3 - section_test_count > 1 { "s" } else { "" }
             );

@@ -9,7 +9,7 @@ fn main() {
     // All of the functions simply set up a standard game of "Turing Machine," but also allows the player to set varying parameters for the game itself, such as the minimum digit of the codes, maximum digit, the length of the codes themselves, and the Criteria Cards available to the Puzzle-Generation algorithm (Alternative Sets of Criteria Cards for differing parameters need to be hard-coded in their own files, and implemented in the several match statements within the codebase).
     let mp: MachineParams = set_game_parameters();
     let (matrix, machine, cards) = generate_results_matrix(&mp);
-    let puzzle: Puzzle = generate_puzzle(matrix, machine, cards, &mp);
+    let mut puzzle: Puzzle = generate_puzzle(matrix, machine, cards, &mp);
     let mut verifiers: Vec<Verifier> = generate_verifiers(&puzzle, &mp);
     clear().unwrap();
     // println!("Solution: {}", *puzzle.target_code);
@@ -24,7 +24,7 @@ fn main() {
     // for i in solution_pool {
     //     println!("{}", *i);
     // }
-    play_game(&puzzle, &mut verifiers, &mp);
+    play_game(&mut puzzle, &mut verifiers, &mp);
 }
 
 //  TODO:

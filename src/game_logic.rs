@@ -167,8 +167,8 @@ impl Display for Puzzle {
     }
 }
 
-pub struct Verifier<'a> {
-    pub test: &'a BigIndex,
+pub struct Verifier {
+    pub test: BigIndex,
     section_marker: String,
     pub label: String
 }
@@ -657,12 +657,12 @@ pub fn make_label(i: &usize, character: char) -> String {
     label
 }
 
-pub fn generate_verifiers<'a, 'b>(puzzle: &'a Puzzle, mp: &'b MachineParams) -> Vec<Verifier<'a>> {
+pub fn generate_verifiers<'a, 'b>(puzzle: &'a Puzzle, mp: &'b MachineParams) -> Vec<Verifier> {
     let mut verifiers: Vec<Verifier> = vec![];
     for (i, t) in puzzle.tests.iter().enumerate() {
         verifiers.push(
             Verifier {
-                test: &t.big_index, 
+                test: t.big_index.clone(), 
                 section_marker: make_label(&i, 'A'),
                 label: make_label(&i, 'a')
             }
